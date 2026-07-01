@@ -5,21 +5,20 @@ on:
     branches: [main]
     tags:
       - 'v*'
-  pull_request:
-    branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   build:
     strategy:
       matrix:
         os: [windows-latest]
-        arch: [x64]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -30,35 +29,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build web app
-        run: npm run build
-
-      - name: Package Electron app
+      - name: Build & package Electron app
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
-        run: npx electron-builder --win --x64 --config.extraMetadata.main=electron/main.cjs --publish=never
+        run: npx vite build && npx electron-builder --win --x64 --publish=never
 
-      - name: Upload installer as artifact
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: resume-editor-windows-${{ matrix.arch }}-${{ github.sha }}
+          name: Resume-Editor-Windows
           path: release/*.exe
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Resume-Editor-Windows
+          path: release-artifacts
 
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: resume-editor-windows-*/*
+          files: release-artifacts/*
           draft: false
           generate_release_notes: true

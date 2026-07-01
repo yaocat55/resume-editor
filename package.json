@@ -43,7 +43,7 @@
   "main": "electron/main.cjs",
   "build": {
     "appId": "com.resume.editor",
-    "productName": "简历编辑器",
+    "productName": "Resume Editor",
     "directories": {
       "output": "release"
     },
