@@ -9,9 +9,14 @@ import {
   Button,
   Stack,
   Chip,
+  Snackbar,
+  Alert,
+  Tooltip,
 } from '@mui/material'
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material'
+import { Add as AddIcon, Close as CloseIcon, AutoAwesome as AiIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
+import useAIStore from '../../store/aiStore'
+import { optimizeProjectDescription, optimizeProjectHighlights } from '../../utils/aiService'
 import PromptDialog from './PromptDialog'
 import MonthPicker from './MonthPicker'
 
@@ -20,9 +25,58 @@ const ProjectEditor: React.FC = () => {
   const addProject = useResumeStore((s) => s.addProject)
   const updateProject = useResumeStore((s) => s.updateProject)
   const removeProject = useResumeStore((s) => s.removeProject)
+  const aiConfig = useAIStore((s) => s.config)
+  const isConfigured = useAIStore((s) => s.isConfigured)
 
   const [techDialog, setTechDialog] = useState<{ open: boolean; projId: string }>({ open: false, projId: '' })
   const [hlDialog, setHlDialog] = useState<{ open: boolean; projId: string }>({ open: false, projId: '' })
+  const [aiLoadingDesc, setAiLoadingDesc] = useState<string | null>(null)
+  const [aiLoadingHl, setAiLoadingHl] = useState<string | null>(null)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false, message: '', severity: 'success',
+  })
+
+  const showMsg = (message: string, severity: 'success' | 'error') =>
+    setSnackbar({ open: true, message, severity })
+
+  const checkConfig = () => {
+    if (!isConfigured()) {
+      showMsg('请先在侧边栏 🤖 中配置 AI 接口和密钥', 'error')
+      return false
+    }
+    return true
+  }
+
+  const handleAiDescription = async (p: typeof projects[0]) => {
+    if (!checkConfig()) return
+    if (!p.description.trim()) { showMsg('请先填写项目描述', 'error'); return }
+    setAiLoadingDesc(p.id)
+    try {
+      const result = await optimizeProjectDescription(aiConfig, p.name, p.role, p.description)
+      updateProject(p.id, { description: result })
+      showMsg('AI 润色完成 ✅', 'success')
+    } catch (e: any) {
+      showMsg(e.message || 'AI 调用失败', 'error')
+    } finally {
+      setAiLoadingDesc(null)
+    }
+  }
+
+  const handleAiHighlights = async (p: typeof projects[0]) => {
+    if (!checkConfig()) return
+    const items = p.highlights || []
+    if (items.length === 0) { showMsg('请先添加亮点/成果', 'error'); return }
+    setAiLoadingHl(p.id)
+    try {
+      const result = await optimizeProjectHighlights(aiConfig, p.name, items)
+      updateProject(p.id, { highlights: result })
+      showMsg('AI 润色完成 ✅', 'success')
+    } catch (e: any) {
+      showMsg(e.message || 'AI 调用失败', 'error')
+    } finally {
+      setAiLoadingHl(null)
+    }
+  }
 
   return (
     <Box>
@@ -83,16 +137,35 @@ const ProjectEditor: React.FC = () => {
                     onChange={(v) => updateProject(p.id, { endDate: v })}
                   />
                 </Box>
-                <TextField
-                  label="项目描述 *"
-                  value={p.description}
-                  onChange={(e) => updateProject(p.id, { description: e.target.value })}
-                  placeholder="基于大模型 API 开发的 PR 代码审查辅助工具..."
-                  multiline
-                  minRows={2}
-                  maxRows={4}
-                  required
-                />
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      项目描述 *
+                    </Typography>
+                    <Tooltip title="AI 优化项目描述">
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<AiIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => handleAiDescription(p)}
+                        disabled={aiLoadingDesc === p.id}
+                        sx={{ fontSize: '0.7rem', minWidth: 0, p: '2px 6px' }}
+                      >
+                        {aiLoadingDesc === p.id ? '…' : 'AI 润色'}
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                  <TextField
+                    value={p.description}
+                    onChange={(e) => updateProject(p.id, { description: e.target.value })}
+                    placeholder="基于大模型 API 开发的 PR 代码审查辅助工具..."
+                    multiline
+                    minRows={2}
+                    maxRows={4}
+                    fullWidth
+                    required
+                  />
+                </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     技术栈
@@ -118,9 +191,25 @@ const ProjectEditor: React.FC = () => {
                   </Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    亮点/成果
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      亮点/成果
+                    </Typography>
+                    {(p.highlights || []).length > 0 && (
+                      <Tooltip title="AI 优化亮点/成果">
+                        <Button
+                          size="small"
+                          variant="text"
+                          startIcon={<AiIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => handleAiHighlights(p)}
+                          disabled={aiLoadingHl === p.id}
+                          sx={{ fontSize: '0.7rem', minWidth: 0, p: '2px 6px' }}
+                        >
+                          {aiLoadingHl === p.id ? '…' : 'AI 润色'}
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                     {(p.highlights || []).map((hl, idx) => (
                       <Chip
@@ -182,6 +271,16 @@ const ProjectEditor: React.FC = () => {
         }}
         onCancel={() => setHlDialog({ open: false, projId: '' })}
       />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ fontSize: '0.85rem' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

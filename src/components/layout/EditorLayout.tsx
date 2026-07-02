@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Box,
   Tabs,
@@ -8,6 +8,7 @@ import {
   IconButton,
   Typography,
   Divider,
+  Collapse,
 } from '@mui/material'
 import {
   Person as PersonIcon,
@@ -21,13 +22,18 @@ import {
   RestartAlt as ResetIcon,
   Visibility as VisibleIcon,
   VisibilityOff as HiddenIcon,
-  ArrowUpward as UpIcon,
-  ArrowDownward as DownIcon,
+  Undo as UndoIcon,
+  Redo as RedoIcon,
   DarkMode as DarkIcon,
   LightMode as LightIcon,
   ChevronLeft as PanelCloseIcon,
+  DragHandle as DragHandleIcon,
+  Reorder as ReorderIcon,
+  Check as CheckIcon,
+  AutoAwesome as AiIcon,
 } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
+import useUndoStore from '../../store/undoStore'
 import useThemeStore from '../../store/themeStore'
 import PersonalEditor from '../editor/PersonalEditor'
 import ProfileEditor from '../editor/ProfileEditor'
@@ -36,6 +42,7 @@ import WorkEditor from '../editor/WorkEditor'
 import ProjectEditor from '../editor/ProjectEditor'
 import SkillsEditor from '../editor/SkillsEditor'
 import CertificatesEditor from '../editor/CertificatesEditor'
+import AIConfigPage from '../editor/AIConfigPage'
 import TemplateManager from '../editor/TemplateManager'
 import ResumePreview from '../preview/ResumePreview'
 import ErrorBoundary from '../ErrorBoundary'
@@ -50,6 +57,7 @@ const dataTabs = [
   { label: '专业技能', value: 'skills', icon: <SkillIcon />, component: <SkillsEditor /> },
   { label: '证书语言', value: 'certificates', icon: <CertIcon />, component: <CertificatesEditor /> },
   { label: '模板管理', value: 'templates', icon: <TemplateIcon />, component: <TemplateManager /> },
+  { label: 'AI 配置', value: 'ai', icon: <AiIcon />, component: <AIConfigPage /> },
 ]
 
 const EditorLayout: React.FC = () => {
@@ -65,10 +73,97 @@ const EditorLayout: React.FC = () => {
   const sectionOrder = useResumeStore((s) => s.sectionOrder)
   const moveSection = useResumeStore((s) => s.moveSection)
 
-  const handleReset = () => {
+  const undoPast = useUndoStore((s) => s.past)
+  const undoFuture = useUndoStore((s) => s.future)
+  const pushState = useUndoStore((s) => s.pushState)
+  const undoAction = useUndoStore((s) => s.undo)
+  const redoAction = useUndoStore((s) => s.redo)
+  const clearUndo = useUndoStore((s) => s.clear)
+  const canUndo = undoPast.length > 0
+  const canRedo = undoFuture.length > 0
+
+  // Subscribe to resume changes → auto-push to undo stack
+  const prevResumeRef = useRef(resumeData)
+  const skipUndoRef = useRef(false)
+  useEffect(() => {
+    // Skip initial mount
+    if (prevResumeRef.current === resumeData) return
+    if (!skipUndoRef.current) {
+      pushState(prevResumeRef.current)
+    }
+    skipUndoRef.current = false
+    prevResumeRef.current = resumeData
+  }, [resumeData, pushState])
+
+  // Clear undo stack on reset/import
+  const handleUndo = useCallback(() => {
+    skipUndoRef.current = true
+    const snapshot = undoAction(resumeData)
+    if (snapshot) importResume(snapshot)
+  }, [resumeData, undoAction, importResume])
+
+  const handleRedo = useCallback(() => {
+    skipUndoRef.current = true
+    const snapshot = redoAction(resumeData)
+    if (snapshot) importResume(snapshot)
+  }, [resumeData, redoAction, importResume])
+
+  const handleReset = useCallback(() => {
     if (window.confirm('确定要清空所有简历数据吗？此操作不可撤销！')) {
+      pushState(resumeData)
       resetResume()
     }
+  }, [resumeData, pushState, resetResume])
+
+  // Keyboard shortcuts: Ctrl+Z / Ctrl+Shift+Z
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) { handleRedo(); e.preventDefault() }
+        else { handleUndo(); e.preventDefault() }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        handleRedo(); e.preventDefault()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [handleUndo, handleRedo])
+
+  // ── Section labels for drag-drop UI ──
+  const SECTION_LABELS: Record<string, string> = {
+    personal: '个人信息',
+    profile: '个人简介',
+    education: '教育经历',
+    work: '工作经历',
+    projects: '项目经验',
+    skills: '专业技能',
+    certificates: '证书语言',
+  }
+
+  // Drag-and-drop state
+  const [reorderOpen, setReorderOpen] = useState(false)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [overIdx, setOverIdx] = useState<number | null>(null)
+
+  const handleDragStart = (idx: number) => {
+    setDragIdx(idx)
+  }
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    if (dragIdx === null || dragIdx === idx) return
+    setOverIdx(idx)
+  }
+  const handleDrop = (idx: number) => {
+    if (dragIdx !== null && dragIdx !== idx) {
+      moveSection(dragIdx, idx)
+    }
+    setDragIdx(null)
+    setOverIdx(null)
+  }
+  const handleDragEnd = () => {
+    setDragIdx(null)
+    setOverIdx(null)
   }
 
   // Sort data tabs by sectionOrder so sidebar matches preview order
@@ -78,18 +173,16 @@ const EditorLayout: React.FC = () => {
     const ordered = sectionOrder
       .map((v) => dataTabsByValue[v])
       .filter(Boolean) as typeof dataTabs
-    // Append template tab at the end
+    // Append template and AI config tabs at the end
     if (dataTabsByValue['templates']) ordered.push(dataTabsByValue['templates'])
+    if (dataTabsByValue['ai']) ordered.push(dataTabsByValue['ai'])
     return ordered
   }, [sectionOrder])
 
   const currentTab = sortedTabs.find((t) => t.value === activeTab) || sortedTabs[0]
-  const isDataTab = currentTab.value !== 'templates'
+  const isDataTab = currentTab.value !== 'templates' && currentTab.value !== 'ai'
   const isVisible = isDataTab ? visibleSections[currentTab.value] : true
   const [drawerOpen, setDrawerOpen] = useState(true)
-  const sectionIdx = sectionOrder.indexOf(currentTab.value)
-  const isFirst = sectionIdx <= 0
-  const isLast = sectionIdx >= sectionOrder.length - 1
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
@@ -140,7 +233,22 @@ const EditorLayout: React.FC = () => {
           ))}
         </Tabs>
         <Divider sx={{ width: '80%', mb: 0.5 }} />
-        <Tooltip title={themeMode === 'dark' ? '切换亮色模式' : '切换深色模式'} placement="right">
+        <Tooltip title="撤销 Ctrl+Z" placement="right">
+              <span>
+                <IconButton size="small" onClick={handleUndo} disabled={!canUndo} sx={{ color: canUndo ? 'text.secondary' : 'text.disabled' }}>
+                  <UndoIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="重做 Ctrl+Shift+Z" placement="right">
+              <span>
+                <IconButton size="small" onClick={handleRedo} disabled={!canRedo} sx={{ color: canRedo ? 'text.secondary' : 'text.disabled' }}>
+                  <RedoIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Divider sx={{ width: '80%', my: 0.5 }} />
+            <Tooltip title={themeMode === 'dark' ? '切换亮色模式' : '切换深色模式'} placement="right">
           <IconButton size="small" onClick={toggleTheme} sx={{ color: 'text.secondary' }}>
             {themeMode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
           </IconButton>
@@ -151,7 +259,7 @@ const EditorLayout: React.FC = () => {
           </IconButton>
         </Tooltip>
         <Tooltip title="填入示例数据" placement="right">
-          <IconButton size="small" color="primary" onClick={() => { if (confirm('当前数据将被覆盖，确定？')) resetResume() }}>
+          <IconButton size="small" color="primary" onClick={() => { if (confirm('当前数据将被覆盖，确定？')) { pushState(resumeData); resetResume() } }}>
             <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>示例</Typography>
           </IconButton>
         </Tooltip>
@@ -218,36 +326,97 @@ const EditorLayout: React.FC = () => {
             📝 简历编辑
           </Typography>
           {isDataTab && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, px: 0.5 }}>
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="上移板块">
-                  <span>
-                    <IconButton size="small" disabled={isFirst} onClick={() => moveSection(sectionIdx, sectionIdx - 1)}>
-                      <UpIcon fontSize="small" />
-                    </IconButton>
-                  </span>
+            <Box sx={{ mb: 1, px: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Tooltip title="调整板块顺序">
+                  <IconButton
+                    size="small"
+                    onClick={() => setReorderOpen(!reorderOpen)}
+                    color={reorderOpen ? 'primary' : 'default'}
+                  >
+                    <ReorderIcon fontSize="small" />
+                  </IconButton>
                 </Tooltip>
-                <Tooltip title="下移板块">
-                  <span>
-                    <IconButton size="small" disabled={isLast} onClick={() => moveSection(sectionIdx, sectionIdx + 1)}>
-                      <DownIcon fontSize="small" />
-                    </IconButton>
-                  </span>
+                <Tooltip title={isVisible ? '点击隐藏此板块' : '点击显示此板块'}>
+                  <IconButton
+                    size="small"
+                    onClick={() => toggleSection(currentTab.value)}
+                    color={isVisible ? 'primary' : 'default'}
+                    sx={{ fontSize: '0.75rem', gap: 0.5 }}
+                  >
+                    {isVisible ? <VisibleIcon fontSize="small" /> : <HiddenIcon fontSize="small" />}
+                    <Typography variant="caption" color={isVisible ? 'primary' : 'text.disabled'}>
+                      {isVisible ? '可见' : '隐藏'}
+                    </Typography>
+                  </IconButton>
                 </Tooltip>
               </Box>
-              <Tooltip title={isVisible ? '点击隐藏此板块' : '点击显示此板块'}>
-                <IconButton
-                  size="small"
-                  onClick={() => toggleSection(currentTab.value)}
-                  color={isVisible ? 'primary' : 'default'}
-                  sx={{ fontSize: '0.75rem', gap: 0.5 }}
+
+              {/* Drag-and-drop reorder panel */}
+              <Collapse in={reorderOpen}>
+                <Paper
+                  variant="outlined"
+                  sx={{ mt: 1, p: 0.5, bgcolor: 'action.hover' }}
+                  onDragOver={(e) => e.preventDefault()}
                 >
-                  {isVisible ? <VisibleIcon fontSize="small" /> : <HiddenIcon fontSize="small" />}
-                  <Typography variant="caption" color={isVisible ? 'primary' : 'text.disabled'}>
-                    {isVisible ? '可见' : '隐藏'}
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', px: 0.5, mb: 0.5, fontSize: '0.65rem' }}>
+                    拖拽调整板块顺序
                   </Typography>
-                </IconButton>
-              </Tooltip>
+                  {sectionOrder.map((section, idx) => {
+                    const label = SECTION_LABELS[section] || section
+                    const isDragging = dragIdx === idx
+                    const isOver = overIdx === idx && dragIdx !== idx
+                    const tabIcon = dataTabs.find((t) => t.value === section)?.icon
+                    return (
+                      <Box
+                        key={section}
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDrop={() => handleDrop(idx)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => { setActiveTab(section); setReorderOpen(false) }}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          px: 1,
+                          py: 0.6,
+                          mb: 0.3,
+                          borderRadius: 1,
+                          cursor: 'grab',
+                          opacity: isDragging ? 0.4 : 1,
+                          border: '1px solid',
+                          borderColor: isOver ? 'primary.main' : 'transparent',
+                          borderStyle: isOver ? 'dashed' : 'solid',
+                          bgcolor: activeTab === section ? 'action.selected' : 'transparent',
+                          transition: 'all 0.15s ease',
+                          '&:hover': { bgcolor: 'action.focus' },
+                          '&:active': { cursor: 'grabbing' },
+                        }}
+                      >
+                        <DragHandleIcon
+                          sx={{
+                            fontSize: 16,
+                            color: 'text.disabled',
+                            flexShrink: 0,
+                            cursor: 'grab',
+                          }}
+                        />
+                        <Box sx={{ fontSize: '0.85rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                          {tabIcon}
+                        </Box>
+                        <Typography variant="body2" sx={{ fontSize: '0.78rem', flex: 1 }}>
+                          {label}
+                        </Typography>
+                        {activeTab === section && (
+                          <CheckIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                        )}
+                      </Box>
+                    )
+                  })}
+                </Paper>
+              </Collapse>
             </Box>
           )}
           {currentTab.component && (

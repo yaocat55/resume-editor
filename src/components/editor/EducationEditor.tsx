@@ -15,6 +15,7 @@ import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import PromptDialog from './PromptDialog'
 import MonthPicker from './MonthPicker'
+import FieldTip from '../FieldTip'
 
 const degrees = ['本科', '硕士', '博士', '专科'] as const
 
@@ -99,11 +100,15 @@ const EducationEditor: React.FC = () => {
                   />
                 </Box>
                 <TextField
-                  label="GPA"
+                  label={
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                      GPA
+                      <FieldTip tip="3.5/4.0 以上建议填写" />
+                    </Box>
+                  }
                   value={edu.gpa || ''}
                   onChange={(e) => updateEducation(edu.id, { gpa: e.target.value })}
                   placeholder="3.8/4.0"
-                  helperText="3.5/4.0 以上建议填写"
                 />
                 <Box>
                   <Typography variant="caption" color="text.secondary">

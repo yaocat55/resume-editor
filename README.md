@@ -80,7 +80,7 @@ npm run build:electron
 | 构建 | Vite 8 |
 | 桌面端 | Electron 43 |
 | 模板渲染 | Shadow DOM |
-| 状态管理 | Zustand + persist |
+| 状态管理 | Zustand + persist |~
 | UI 组件 | MUI v9 |
 | 日期选择 | MUI X Date Pickers |
 | 图标 | Material Icons |

@@ -9,18 +9,74 @@ import {
   Button,
   Stack,
   Chip,
+  Snackbar,
+  Alert,
+  Tooltip,
 } from '@mui/material'
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material'
+import { Add as AddIcon, Close as CloseIcon, AutoAwesome as AiIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
+import useAIStore from '../../store/aiStore'
+import { optimizeWorkDescription, optimizeWorkAchievements } from '../../utils/aiService'
 import PromptDialog from './PromptDialog'
 import MonthPicker from './MonthPicker'
+import FieldTip from '../FieldTip'
 
 const WorkEditor: React.FC = () => {
   const work = useResumeStore((s) => s.resume.work)
   const addWork = useResumeStore((s) => s.addWork)
   const updateWork = useResumeStore((s) => s.updateWork)
   const removeWork = useResumeStore((s) => s.removeWork)
+  const aiConfig = useAIStore((s) => s.config)
+  const isConfigured = useAIStore((s) => s.isConfigured)
+
   const [achDialog, setAchDialog] = useState<{ open: boolean; workId: string }>({ open: false, workId: '' })
+  const [aiLoadingDesc, setAiLoadingDesc] = useState<string | null>(null)
+  const [aiLoadingAch, setAiLoadingAch] = useState<string | null>(null)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false, message: '', severity: 'success',
+  })
+
+  const showMsg = (message: string, severity: 'success' | 'error') =>
+    setSnackbar({ open: true, message, severity })
+
+  const checkConfig = () => {
+    if (!isConfigured()) {
+      showMsg('请先在侧边栏 🤖 中配置 AI 接口和密钥', 'error')
+      return false
+    }
+    return true
+  }
+
+  const handleAiDescription = async (w: typeof work[0]) => {
+    if (!checkConfig()) return
+    if (!w.description.trim()) { showMsg('请先填写工作描述', 'error'); return }
+    setAiLoadingDesc(w.id)
+    try {
+      const result = await optimizeWorkDescription(aiConfig, w.company, w.position, w.description)
+      updateWork(w.id, { description: result })
+      showMsg('AI 润色完成 ✅', 'success')
+    } catch (e: any) {
+      showMsg(e.message || 'AI 调用失败', 'error')
+    } finally {
+      setAiLoadingDesc(null)
+    }
+  }
+
+  const handleAiAchievements = async (w: typeof work[0]) => {
+    if (!checkConfig()) return
+    const items = w.achievements || []
+    if (items.length === 0) { showMsg('请先添加量化成果', 'error'); return }
+    setAiLoadingAch(w.id)
+    try {
+      const result = await optimizeWorkAchievements(aiConfig, w.company, w.position, items)
+      updateWork(w.id, { achievements: result })
+      showMsg('AI 润色完成 ✅', 'success')
+    } catch (e: any) {
+      showMsg(e.message || 'AI 调用失败', 'error')
+    } finally {
+      setAiLoadingAch(null)
+    }
+  }
 
   return (
     <Box>
@@ -83,20 +139,56 @@ const WorkEditor: React.FC = () => {
                     required
                   />
                 </Box>
-                <TextField
-                  label="工作描述 *"
-                  value={w.description}
-                  onChange={(e) => updateWork(w.id, { description: e.target.value })}
-                  placeholder="负责抖音电商后台管理系统的前端架构设计与团队协作..."
-                  multiline
-                  minRows={2}
-                  maxRows={4}
-                  required
-                />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    量化成果（强烈建议填写）
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      工作描述 *
+                    </Typography>
+                    <Tooltip title="AI 优化工作描述">
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<AiIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => handleAiDescription(w)}
+                        disabled={aiLoadingDesc === w.id}
+                        sx={{ fontSize: '0.7rem', minWidth: 0, p: '2px 6px' }}
+                      >
+                        {aiLoadingDesc === w.id ? '…' : 'AI 润色'}
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                  <TextField
+                    value={w.description}
+                    onChange={(e) => updateWork(w.id, { description: e.target.value })}
+                    placeholder="负责抖音电商后台管理系统的前端架构设计与团队协作..."
+                    multiline
+                    minRows={2}
+                    maxRows={4}
+                    fullWidth
+                    required
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                      量化成果
+                      <FieldTip tip="强烈建议填写，用数据体现工作产出" />
+                    </Typography>
+                    {(w.achievements || []).length > 0 && (
+                      <Tooltip title="AI 优化量化成果">
+                        <Button
+                          size="small"
+                          variant="text"
+                          startIcon={<AiIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => handleAiAchievements(w)}
+                          disabled={aiLoadingAch === w.id}
+                          sx={{ fontSize: '0.7rem', minWidth: 0, p: '2px 6px' }}
+                        >
+                          {aiLoadingAch === w.id ? '…' : 'AI 润色'}
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                     {(w.achievements || []).map((ach, idx) => (
                       <Chip
@@ -134,6 +226,16 @@ const WorkEditor: React.FC = () => {
         }}
         onCancel={() => setAchDialog({ open: false, workId: '' })}
       />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ fontSize: '0.85rem' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

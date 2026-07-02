@@ -4,7 +4,7 @@ import {
   Typography,
   Card,
   CardContent,
-  CardActions,
+  CardActionArea,
   Button,
   TextField,
   Dialog,
@@ -15,10 +15,7 @@ import {
   Stack,
   Chip,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  Radio,
+  Grid,
   Tooltip,
 } from '@mui/material'
 import {
@@ -28,6 +25,41 @@ import {
   Warning as WarningIcon,
 } from '@mui/icons-material'
 import useTemplateStore, { type TemplateValidationResult } from '../../store/templateStore'
+
+// ── Template accent colors & metadata ──
+const TEMPLATE_ACCENTS: Record<string, { gradient: string; icon: string; color: string }> = {
+  '__default__': { gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)', icon: '📋', color: '#2563eb' },
+  'm3': { gradient: 'linear-gradient(135deg, #6366f1, #a5b4fc)', icon: '💠', color: '#6366f1' },
+  'vscode': { gradient: 'linear-gradient(135deg, #1e1e1e, #007acc)', icon: '💻', color: '#007acc' },
+  'github': { gradient: 'linear-gradient(135deg, #24292f, #2da44e)', icon: '🐙', color: '#2da44e' },
+  'minimal': { gradient: 'linear-gradient(135deg, #475569, #94a3b8)', icon: '📄', color: '#475569' },
+  'academic': { gradient: 'linear-gradient(135deg, #92400e, #f59e0b)', icon: '🎓', color: '#b45309' },
+  'creative': { gradient: 'linear-gradient(135deg, #7c3aed, #ec4899)', icon: '🎨', color: '#9333ea' },
+  'social': { gradient: 'linear-gradient(135deg, #ff2442, #ff6b81)', icon: '📕', color: '#ff2442' },
+  'bento': { gradient: 'linear-gradient(135deg, #0891b2, #22d3ee)', icon: '🧩', color: '#0891b2' },
+  'fde': { gradient: 'linear-gradient(135deg, #0d9488, #5eead4)', icon: '⚙️', color: '#0d9488' },
+}
+
+const SECTION_LABELS: Record<string, string> = {
+  personal: '个人信息',
+  profile: '个人简介',
+  education: '教育经历',
+  work: '工作经历',
+  projects: '项目经验',
+  skills: '专业技能',
+  certificates: '证书语言',
+}
+
+// Fallback accent
+const getAccent = (id: string, name: string) => {
+  // Try matching by template ID first, then by name key
+  const byId = TEMPLATE_ACCENTS[id]
+  if (byId) return byId
+  const key = Object.keys(TEMPLATE_ACCENTS).find((k) =>
+    name.toLowerCase().includes(k.replace('__default__', 'classic'))
+  )
+  return key ? TEMPLATE_ACCENTS[key] : TEMPLATE_ACCENTS['__default__']
+}
 
 const TemplateManager: React.FC = () => {
   const templates = useTemplateStore((s) => s.templates)
@@ -52,30 +84,18 @@ const TemplateManager: React.FC = () => {
     reader.onload = (evt) => {
       const content = evt.target?.result as string
       setHtmlInput(content)
-
-      // Auto-detect name from filename
-      if (!uploadName) {
-        setUploadName(file.name.replace(/\.html?$/i, ''))
-      }
-
-      // Validate
-      const result = validateTemplate(content)
-      setValidationResult(result)
+      if (!uploadName) setUploadName(file.name.replace(/\.html?$/i, ''))
+      setValidationResult(validateTemplate(content))
     }
     reader.readAsText(file)
   }
 
   const handleUploadConfirm = () => {
     if (!htmlInput.trim() || !uploadName.trim()) return
-
-    // Final validation
     const result = validateTemplate(htmlInput)
-    if (result.errors.length > 0) {
-      setValidationResult(result)
-      return
-    }
+    if (result.errors.length > 0) { setValidationResult(result); return }
 
-    const id = addTemplate({
+    addTemplate({
       meta: {
         name: uploadName.trim(),
         description: uploadDesc.trim() || '用户上传模板',
@@ -84,14 +104,7 @@ const TemplateManager: React.FC = () => {
       },
       html: htmlInput,
     })
-
-    // Reset
-    setUploadOpen(false)
-    setHtmlInput('')
-    setUploadName('')
-    setUploadDesc('')
-    setUploadAuthor('')
-    setValidationResult(null)
+    handleCloseUpload()
   }
 
   const handleCloseUpload = () => {
@@ -107,7 +120,7 @@ const TemplateManager: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" sx={{ color: 'primary.main' }}>
-          模板管理
+          选择模板
         </Typography>
         <Button
           variant="contained"
@@ -120,61 +133,133 @@ const TemplateManager: React.FC = () => {
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-        选择一个模板，简历预览将使用该模板渲染。模板使用 HTML + CSS，通过
-        {'{{字段名}}'} 占位符与数据绑定。
+        选择一个模板，预览区将实时展示效果。
       </Typography>
 
-      {/* Template list */}
-      <List sx={{ bgcolor: 'background.paper' }}>
-        {templates.map((template) => (
-          <Card
-            key={template.id}
-            variant="outlined"
-            sx={{
-              mb: 1,
-              borderColor: currentTemplateId === template.id ? 'primary.main' : 'divider',
-              bgcolor: currentTemplateId === template.id ? 'primary.light' : 'background.paper',
-            }}
-          >
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                <Radio
-                  checked={currentTemplateId === template.id}
-                  onChange={() => setCurrentTemplate(template.id)}
-                  size="small"
-                />
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="subtitle2">
-                      {template.meta.name}
-                    </Typography>
-                    {template.builtIn && (
-                      <Chip label="内置" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} />
-                    )}
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {template.meta.description}
+      {/* Template Gallery Grid */}
+      <Grid container spacing={1.5}>
+        {templates.map((template) => {
+          const accent = getAccent(template.id, template.meta.name)
+          const isSelected = currentTemplateId === template.id
+          return (
+            <Grid size={{ xs: 12, sm: 6 }} key={template.id}>
+              <Card
+                variant="outlined"
+                sx={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s ease',
+                  borderColor: isSelected ? accent.color : 'divider',
+                  borderWidth: isSelected ? 2 : 1,
+                  bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                  '&:hover': {
+                    borderColor: isSelected ? accent.color : 'primary.light',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              >
+                {/* Accent bar */}
+                <Box
+                  sx={{
+                    height: 48,
+                    background: accent.gradient,
+                    display: 'flex',
+                    alignItems: 'center',
+                    px: 2,
+                    gap: 1,
+                  }}
+                >
+                  <Typography sx={{ fontSize: '1.2rem', lineHeight: 1 }}>
+                    {accent.icon}
                   </Typography>
-                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
-                    作者: {template.meta.author} | v{template.meta.version}
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: '#fff', fontWeight: 600, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                  >
+                    {template.meta.name}
                   </Typography>
-                </Box>
-                {!template.builtIn && (
-                  <Tooltip title="删除模板">
-                    <IconButton
+                  {template.builtIn && (
+                    <Chip
+                      label="内置"
                       size="small"
-                      
-                      onClick={() => removeTemplate(template.id)}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
-      </List>
+                      sx={{
+                        height: 18,
+                        fontSize: '0.6rem',
+                        ml: 'auto',
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        color: '#fff',
+                        fontWeight: 600,
+                      }}
+                    />
+                  )}
+                  {!template.builtIn && (
+                    <Tooltip title="删除模板">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); removeTemplate(template.id) }}
+                        sx={{ ml: 'auto', color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#fff' } }}
+                      >
+                        <CloseIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+
+                <CardActionArea
+                  onClick={() => setCurrentTemplate(template.id)}
+                  sx={{ '&:hover .MuiCardActionArea-focusHighlight': { opacity: 0.04 } }}
+                >
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      {/* Template sections preview */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.4,
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            fontSize: '0.75rem',
+                            lineHeight: 1.4,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {template.meta.description}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem' }}>
+                          作者: {template.meta.author} · v{template.meta.version}
+                        </Typography>
+                      </Box>
+
+                      {/* Selection indicator */}
+                      {isSelected && (
+                        <CheckIcon
+                          sx={{
+                            fontSize: 24,
+                            color: accent.color,
+                            flexShrink: 0,
+                            alignSelf: 'center',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          )
+        })}
+      </Grid>
 
       {/* Upload Dialog */}
       <Dialog open={uploadOpen} onClose={handleCloseUpload} maxWidth="md" fullWidth>
@@ -235,7 +320,6 @@ const TemplateManager: React.FC = () => {
               placeholder="作者名称"
             />
 
-            {/* Validation results */}
             {validationResult && (
               <Card variant="outlined">
                 <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
@@ -264,21 +348,9 @@ const TemplateManager: React.FC = () => {
                     检测到容器区块: {validationResult.sections.join(', ') || '无'}
                   </Typography>
                   {validationResult.valid ? (
-                    <Chip
-                      icon={<CheckIcon />}
-                      label="模板兼容性检查通过"
-                      size="small"
-                      color="success"
-                      sx={{ mt: 0.5 }}
-                    />
+                    <Chip icon={<CheckIcon />} label="模板兼容性检查通过" size="small" color="success" sx={{ mt: 0.5 }} />
                   ) : (
-                    <Chip
-                      icon={<WarningIcon />}
-                      label="存在错误，请修正后上传"
-                      size="small"
-                      
-                      sx={{ mt: 0.5 }}
-                    />
+                    <Chip icon={<WarningIcon />} label="存在错误，请修正后上传" size="small" sx={{ mt: 0.5 }} />
                   )}
                 </CardContent>
               </Card>
