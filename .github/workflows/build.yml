@@ -3,19 +3,13 @@ name: Build Electron App
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [windows-latest]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -42,12 +36,52 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump version & create tag
+        id: bump
+        shell: bash
+        run: |
+          # Read current version
+          VERSION=$(node -p "require('./package.json').version")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          NEXT="$MAJOR.$MINOR.$((PATCH + 1))"
+          TAG="v$NEXT"
+
+          echo "Current: v$VERSION"
+          echo "Next:    $TAG"
+
+          # Update package.json
+          node -e "
+            const p = require('./package.json');
+            p.version = '$NEXT';
+            require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+
+          # Commit and tag
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add package.json
+          git commit -m "chore: bump version to $TAG [skip ci]"
+          git tag "$TAG"
+
+          # Set output
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Push tag
+        run: |
+          git push origin --tags
+
+      - name: Download installer
+        uses: actions/download-artifact@v4
         with:
           name: Resume-Editor-Windows
           path: release-artifacts
@@ -55,6 +89,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.bump.outputs.tag }}
+          name: ${{ steps.bump.outputs.tag }}
           files: release-artifacts/*
           draft: false
           generate_release_notes: true
