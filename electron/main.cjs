@@ -25,7 +25,23 @@ function createWindow() {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    // Set CSP for production
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': ["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' *;"],
+        },
+      })
+    })
   }
+
+  // Catch load failures → show error page instead of white screen
+  mainWindow.webContents.on('did-fail-load', (_, code, desc) => {
+    if (!isDev) {
+      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<h2 style="font-family:sans-serif;padding:40px;text-align:center;color:#666;">加载失败 (${code})<br><small>${desc}</small><br><br>请尝试重新安装应用</h2>`)}`)
+    }
+  })
 
   // Build app menu (remove default menu items like File/Edit)
   const menu = Menu.buildFromTemplate([
