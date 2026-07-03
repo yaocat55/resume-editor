@@ -1,6 +1,6 @@
 # Resume Editor
 
-> 跨平台简历编辑器 — 10 款精心设计的简历模板，所见即所得的编辑体验。
+> 跨平台简历编辑器 — 10 款精心设计的简历模板 + AI 润色，所见即所得的编辑体验。
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/yaocat55/resume-editor)
@@ -10,14 +10,20 @@
 
 ## 特性
 
+- **🤖 AI 润色** — 接入任意 OpenAI 兼容 API，支持分段润色（全篇上下文感知）和全文润色（JSON 入 JSON 出 + diff 对比）
 - **📝 所见即所得编辑** — 左侧编辑，右侧实时预览，所有模板基于 Shadow DOM 隔离渲染
 - **🎨 10 款简历模板** — 经典商务、Material 3 雾蓝、VS Code 代码风、GitHub Profile、小红书、Bento 网格、学术、创意设计、FDE 实施工程师、极简 ATS
-- **🖨️ 原生 PDF 导出** — Electron 版直接调用 `printToPDF`，无页眉页脚、无需手动设置
+- **↩️ Undo / Redo** — Ctrl+Z 撤销、Ctrl+Shift+Z 重做，30 步历史记录
+- **🔄 拖拽排序** — 拖拽调整简历板块顺序，无需上下箭头
+- **🖼️ 模板画廊** — 可视化模板选择，每个模板有专属配色卡片
+- **📷 头像上传** — 点击上传头像，自动转 base64 存储
+- **🖨️ 原生 PDF 导出** — Electron 版直接调用 `printToPDF`，无页眉页脚
 - **📄 渲染 HTML 导出** — 导出包含完整数据的独立 HTML 文件，Word 可直接打开
-- **🌓 深色/浅色模式** — 编辑器自动跟随系统主题
+- **🌓 深色/浅色模式** — 0.35s 平滑过渡动画
 - **📦 数据持久化** — 自动保存到本地，支持 JSON 导入导出
-- **📐 强制一页** — 内容超长时自动缩放适配一页 A4（适合打印）
-- **🔒 隐私安全** — 纯本地应用，所有数据存储在您的本地浏览器/磁盘
+- **📐 强制一页** — 内容超长时自动缩放适配一页 A4
+- **🔒 隐私安全** — 纯本地应用，AI 数据直发你配置的地址，不经第三方
+- **🔄 自动发版** — GitHub Actions 每次推送自动构建 + 发布 Release
 
 ## 模板一览
 
@@ -59,11 +65,24 @@ npm run dev:electron
 ### 构建安装包
 
 ```bash
-npm run build
 npm run build:electron
 ```
 
 安装包将输出到 `release/` 目录。
+
+## AI 配置
+
+支持所有兼容 OpenAI Chat Completions 格式的 API：
+
+| 供应商 | 自动配置 |
+|--------|---------|
+| **DeepSeek** | `api.deepseek.com` + V4 Flash / V4 Pro |
+| **硅基流动** | `api.siliconflow.cn/v1` + DeepSeek / QwQ / GLM 等 |
+| **OpenAI** | `api.openai.com/v1` + GPT-4o 系列 |
+| **CCSub / OpenRouter** | 聚合中转，多模型可选 |
+| **自定义** | 任意兼容地址 |
+
+点击「获取模型」可从 API 拉取实时模型列表。
 
 ## 导出 PDF 指南
 
@@ -76,14 +95,16 @@ npm run build:electron
 
 | 层 | 技术 |
 |----|------|
-| 框架 | React 18 + TypeScript |
+| 框架 | React 19 + TypeScript 6 |
 | 构建 | Vite 8 |
 | 桌面端 | Electron 43 |
 | 模板渲染 | Shadow DOM |
-| 状态管理 | Zustand + persist |~
-| UI 组件 | MUI v9 |
+| 状态管理 | Zustand 5 + persist |
+| UI 组件 | MUI v9 (Material Design 3) |
 | 日期选择 | MUI X Date Pickers |
 | 图标 | Material Icons |
+| 国际化 | i18next |
+| CI/CD | GitHub Actions (自动构建 + 发版) |
 
 ## 项目结构
 
@@ -93,18 +114,31 @@ resume-editor/
 │   ├── main.cjs             # 窗口创建、IPC、菜单
 │   └── preload.cjs          # contextBridge 预加载
 ├── src/
+│   ├── features/            # 按功能聚合的模块
+│   │   └── ai/              # AI 润色（store + service + 页面）
 │   ├── components/
 │   │   ├── editor/          # 各编辑器组件
 │   │   ├── preview/         # Shadow DOM 预览
-│   │   └── layout/          # 编辑器布局
+│   │   ├── layout/          # 编辑器布局
+│   │   └── shared/          # 共享小组件
+│   ├── hooks/               # 自定义 hooks
+│   │   └── useUndo.ts       # Undo/Redo 逻辑
 │   ├── templates/           # 10 款简历模板
-│   │   ├── shared.ts        # 公共 DOM 操作函数
-│   │   ├── classic.ts       # 经典模板
-│   │   └── ...              # 其他模板
 │   ├── store/               # Zustand 状态
+│   ├── i18n/                # 国际化文件
 │   └── types/               # TypeScript 类型
 ├── .github/workflows/       # CI/CD
 └── package.json
+```
+
+## 开发
+
+```bash
+# 代码检查
+npm run lint
+
+# 构建
+npm run build
 ```
 
 ## 贡献
