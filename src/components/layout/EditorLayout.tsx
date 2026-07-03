@@ -21,7 +21,6 @@ import {
   Build as SkillIcon,
   Verified as CertIcon,
   Palette as TemplateIcon,
-  RestartAlt as ResetIcon,
   Visibility as VisibleIcon,
   VisibilityOff as HiddenIcon,
   Undo as UndoIcon,
@@ -40,7 +39,6 @@ import { useUndo } from '../../hooks/useUndo'
 import { useTranslation } from 'react-i18next'
 import useAIStore from '../../features/ai/store'
 import { optimizeFullResume } from '../../features/ai/service'
-import useLocaleStore from '../../store/localeStore'
 import PersonalEditor from '../editor/PersonalEditor'
 import ProfileEditor from '../editor/ProfileEditor'
 import EducationEditor from '../editor/EducationEditor'
@@ -59,8 +57,8 @@ const EditorLayout: React.FC = () => {
   const { t } = useTranslation()
   const activeTab = useResumeStore((s) => s.activeTab)
   const setActiveTab = useResumeStore((s) => s.setActiveTab)
-  const resetResume = useResumeStore((s) => s.resetResume)
   const importResume = useResumeStore((s) => s.importResume)
+  const resetResume = useResumeStore((s) => s.resetResume)
   const themeMode = useThemeStore((s) => s.mode)
   const toggleTheme = useThemeStore((s) => s.toggleMode)
   const visibleSections = useResumeStore((s) => s.visibleSections)
@@ -81,16 +79,6 @@ const EditorLayout: React.FC = () => {
   ]
 
   const { canUndo, canRedo, handleUndo, handleRedo } = useUndo()
-  const locale = useLocaleStore((s) => s.locale)
-  const toggleLocale = useLocaleStore((s) => s.toggleLocale)
-
-  const handleReset = useCallback(() => {
-    if (window.confirm('确定要清空所有简历数据吗？此操作不可撤销！')) {
-      const currentResume = useResumeStore.getState().resume
-      importResume(currentResume) // Push undo state before reset
-      resetResume()
-    }
-  }, [importResume, resetResume])
 
   // ── 全文润色 ──
   const [polishOpen, setPolishOpen] = useState(false)
@@ -256,91 +244,43 @@ const EditorLayout: React.FC = () => {
           ))}
         </Tabs>
         <Divider sx={{ width: '80%', mb: 0.5 }} />
-        <Tooltip title="撤销 Ctrl+Z" placement="right">
-              <span>
-                <IconButton size="small" onClick={handleUndo} disabled={!canUndo} sx={{ color: canUndo ? 'text.secondary' : 'text.disabled' }}>
-                  <UndoIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="重做 Ctrl+Shift+Z" placement="right">
-              <span>
-                <IconButton size="small" onClick={handleRedo} disabled={!canRedo} sx={{ color: canRedo ? 'text.secondary' : 'text.disabled' }}>
-                  <RedoIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Divider sx={{ width: '80%', my: 0.5 }} />
-            <Tooltip title="AI 全文润色 — 通读整份简历后统一优化" placement="right">
-              <IconButton
-                size="small"
-                onClick={handleFullPolish}
-                sx={{
-                  color: '#fff',
-                  bgcolor: 'primary.main',
-                  width: 36,
-                  height: 36,
-                  '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.1)' },
-                  transition: 'all 0.15s',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                }}
-              >
-                <AiIcon sx={{ fontSize: 18 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3, pb: 0.5 }}>
+          <Tooltip title={t('sidebar.undo')} placement="right">
+            <span>
+              <IconButton size="small" onClick={handleUndo} disabled={!canUndo} sx={{ color: canUndo ? 'text.secondary' : 'text.disabled' }}>
+                <UndoIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
-            <Tooltip title={themeMode === 'dark' ? '切换亮色模式' : '切换深色模式'} placement="right">
-          <IconButton size="small" onClick={toggleTheme} sx={{ color: 'text.secondary' }}>
-            {themeMode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={locale === 'zh' ? 'Switch to English' : '切换到中文'} placement="right">
-          <IconButton size="small" onClick={toggleLocale} sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 700, width: 36 }}>
-            {locale === 'zh' ? 'EN' : '中'}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="清空所有数据" placement="right">
-          <IconButton size="small" color="error" onClick={handleReset}>
-            <ResetIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="填入示例数据" placement="right">
-          <IconButton size="small" color="primary" onClick={() => { const r = useResumeStore.getState().resume; if (confirm('当前数据将被覆盖，确定？')) { pushState(r); resetResume() } }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>示例</Typography>
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="导出 JSON 数据" placement="right">
-          <IconButton size="small" color="info" onClick={() => {
-            const r = useResumeStore.getState().resume
-            const blob = new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' })
-            const a = document.createElement('a')
-            a.href = URL.createObjectURL(blob)
-            a.download = `${r.personal.fullName || 'resume-data'}.json`
-            a.click()
-            URL.revokeObjectURL(blob)
-          }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>导出</Typography>
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="导入 JSON 数据" placement="right">
-          <IconButton size="small" color="info" onClick={() => {
-            const input = document.createElement('input')
-            input.type = 'file'
-            input.accept = '.json'
-            input.onchange = (e: any) => {
-              const file = e.target?.files?.[0]
-              if (!file) return
-              const reader = new FileReader()
-              reader.onload = () => {
-                try { importResume(JSON.parse(reader.result as string)) }
-                catch { alert('JSON 格式错误') }
-              }
-              reader.readAsText(file)
-            }
-            input.click()
-          }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>导入</Typography>
-          </IconButton>
-        </Tooltip>
+            </span>
+          </Tooltip>
+          <Tooltip title={t('sidebar.redo')} placement="right">
+            <span>
+              <IconButton size="small" onClick={handleRedo} disabled={!canRedo} sx={{ color: canRedo ? 'text.secondary' : 'text.disabled' }}>
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+        <Divider sx={{ width: '80%', my: 0.3 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3, pb: 0.5 }}>
+          <Tooltip title={t('sidebar.fullPolish')} placement="right">
+            <IconButton
+              size="small"
+              onClick={handleFullPolish}
+              sx={{
+                color: '#fff', bgcolor: 'primary.main', width: 36, height: 36,
+                '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.1)' },
+                transition: 'all 0.15s', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}
+            >
+              <AiIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={themeMode === 'dark' ? t('sidebar.toggleThemeLight') : t('sidebar.toggleTheme')} placement="right">
+            <IconButton size="small" onClick={toggleTheme} sx={{ color: 'text.secondary' }}>
+              {themeMode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Paper>
 
       {/* Editor Panel - animated width */}
