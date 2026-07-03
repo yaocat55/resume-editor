@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   Box,
   Tabs,
@@ -9,6 +9,8 @@ import {
   Typography,
   Divider,
   Collapse,
+  Snackbar,
+  Alert,
 } from '@mui/material'
 import {
   Person as PersonIcon,
@@ -33,8 +35,12 @@ import {
   AutoAwesome as AiIcon,
 } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
-import useUndoStore from '../../store/undoStore'
 import useThemeStore from '../../store/themeStore'
+import { useUndo } from '../../hooks/useUndo'
+import { useTranslation } from 'react-i18next'
+import useAIStore from '../../features/ai/store'
+import { optimizeFullResume } from '../../features/ai/service'
+import useLocaleStore from '../../store/localeStore'
 import PersonalEditor from '../editor/PersonalEditor'
 import ProfileEditor from '../editor/ProfileEditor'
 import EducationEditor from '../editor/EducationEditor'
@@ -42,30 +48,19 @@ import WorkEditor from '../editor/WorkEditor'
 import ProjectEditor from '../editor/ProjectEditor'
 import SkillsEditor from '../editor/SkillsEditor'
 import CertificatesEditor from '../editor/CertificatesEditor'
-import AIConfigPage from '../editor/AIConfigPage'
+import AIConfigPage from '../../features/ai/AIConfigPage'
 import TemplateManager from '../editor/TemplateManager'
 import ResumePreview from '../preview/ResumePreview'
 import ErrorBoundary from '../ErrorBoundary'
+import FullPolishDialog from '../FullPolishDialog'
 import type { Resume } from '../../types/resume'
 
-const dataTabs = [
-  { label: '个人信息', value: 'personal', icon: <PersonIcon />, component: <PersonalEditor /> },
-  { label: '个人简介', value: 'profile', icon: <ProfileIcon />, component: <ProfileEditor /> },
-  { label: '教育经历', value: 'education', icon: <EduIcon />, component: <EducationEditor /> },
-  { label: '工作经历', value: 'work', icon: <WorkIcon />, component: <WorkEditor /> },
-  { label: '项目经验', value: 'projects', icon: <ProjectIcon />, component: <ProjectEditor /> },
-  { label: '专业技能', value: 'skills', icon: <SkillIcon />, component: <SkillsEditor /> },
-  { label: '证书语言', value: 'certificates', icon: <CertIcon />, component: <CertificatesEditor /> },
-  { label: '模板管理', value: 'templates', icon: <TemplateIcon />, component: <TemplateManager /> },
-  { label: 'AI 配置', value: 'ai', icon: <AiIcon />, component: <AIConfigPage /> },
-]
-
 const EditorLayout: React.FC = () => {
+  const { t } = useTranslation()
   const activeTab = useResumeStore((s) => s.activeTab)
   const setActiveTab = useResumeStore((s) => s.setActiveTab)
   const resetResume = useResumeStore((s) => s.resetResume)
   const importResume = useResumeStore((s) => s.importResume)
-  const resumeData = useResumeStore((s) => s.resume)
   const themeMode = useThemeStore((s) => s.mode)
   const toggleTheme = useThemeStore((s) => s.toggleMode)
   const visibleSections = useResumeStore((s) => s.visibleSections)
@@ -73,62 +68,90 @@ const EditorLayout: React.FC = () => {
   const sectionOrder = useResumeStore((s) => s.sectionOrder)
   const moveSection = useResumeStore((s) => s.moveSection)
 
-  const undoPast = useUndoStore((s) => s.past)
-  const undoFuture = useUndoStore((s) => s.future)
-  const pushState = useUndoStore((s) => s.pushState)
-  const undoAction = useUndoStore((s) => s.undo)
-  const redoAction = useUndoStore((s) => s.redo)
-  const clearUndo = useUndoStore((s) => s.clear)
-  const canUndo = undoPast.length > 0
-  const canRedo = undoFuture.length > 0
+  const dataTabs = [
+    { label: t('sidebar.personal'), value: 'personal', icon: <PersonIcon />, component: <PersonalEditor /> },
+    { label: t('sidebar.profile'), value: 'profile', icon: <ProfileIcon />, component: <ProfileEditor /> },
+    { label: t('sidebar.education'), value: 'education', icon: <EduIcon />, component: <EducationEditor /> },
+    { label: t('sidebar.work'), value: 'work', icon: <WorkIcon />, component: <WorkEditor /> },
+    { label: t('sidebar.projects'), value: 'projects', icon: <ProjectIcon />, component: <ProjectEditor /> },
+    { label: t('sidebar.skills'), value: 'skills', icon: <SkillIcon />, component: <SkillsEditor /> },
+    { label: t('sidebar.certificates'), value: 'certificates', icon: <CertIcon />, component: <CertificatesEditor /> },
+    { label: t('sidebar.templates'), value: 'templates', icon: <TemplateIcon />, component: <TemplateManager /> },
+    { label: t('sidebar.aiConfig'), value: 'ai', icon: <AiIcon />, component: <AIConfigPage /> },
+  ]
 
-  // Subscribe to resume changes → auto-push to undo stack
-  const prevResumeRef = useRef(resumeData)
-  const skipUndoRef = useRef(false)
-  useEffect(() => {
-    // Skip initial mount
-    if (prevResumeRef.current === resumeData) return
-    if (!skipUndoRef.current) {
-      pushState(prevResumeRef.current)
-    }
-    skipUndoRef.current = false
-    prevResumeRef.current = resumeData
-  }, [resumeData, pushState])
-
-  // Clear undo stack on reset/import
-  const handleUndo = useCallback(() => {
-    skipUndoRef.current = true
-    const snapshot = undoAction(resumeData)
-    if (snapshot) importResume(snapshot)
-  }, [resumeData, undoAction, importResume])
-
-  const handleRedo = useCallback(() => {
-    skipUndoRef.current = true
-    const snapshot = redoAction(resumeData)
-    if (snapshot) importResume(snapshot)
-  }, [resumeData, redoAction, importResume])
+  const { canUndo, canRedo, handleUndo, handleRedo } = useUndo()
+  const locale = useLocaleStore((s) => s.locale)
+  const toggleLocale = useLocaleStore((s) => s.toggleLocale)
 
   const handleReset = useCallback(() => {
     if (window.confirm('确定要清空所有简历数据吗？此操作不可撤销！')) {
-      pushState(resumeData)
+      const currentResume = useResumeStore.getState().resume
+      importResume(currentResume) // Push undo state before reset
       resetResume()
     }
-  }, [resumeData, pushState, resetResume])
+  }, [importResume, resetResume])
 
-  // Keyboard shortcuts: Ctrl+Z / Ctrl+Shift+Z
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        if (e.shiftKey) { handleRedo(); e.preventDefault() }
-        else { handleUndo(); e.preventDefault() }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        handleRedo(); e.preventDefault()
-      }
+  // ── 全文润色 ──
+  const [polishOpen, setPolishOpen] = useState(false)
+  const [polishLoading, setPolishLoading] = useState(false)
+  const [polishDiffs, setPolishDiffs] = useState<{ section: string; field: string; before: string; after: string }[]>([])
+  const [polishError, setPolishError] = useState('')
+  const [optimizedResume, setOptimizedResume] = useState<Resume | null>(null)
+  const aiConfig = useAIStore((s) => s.config)
+  const isAiConfigured = useAIStore((s) => s.isConfigured)
+  const [polishSnackbar, setPolishSnackbar] = useState('')
+
+  // 计算 diff
+  const computeDiffs = (original: Resume, optimized: Resume) => {
+    const diffs: { section: string; field: string; before: string; after: string }[] = []
+    if (original.profile !== optimized.profile) diffs.push({ section: '个人简介', field: 'profile', before: original.profile, after: optimized.profile })
+    optimized.work.forEach((w, i) => {
+      const ow = original.work[i]
+      if (!ow) return
+      if (ow.description !== w.description) diffs.push({ section: `工作经历 #${i+1}`, field: '描述', before: ow.description, after: w.description })
+      if (JSON.stringify(ow.achievements) !== JSON.stringify(w.achievements)) diffs.push({ section: `工作经历 #${i+1}`, field: '量化成果', before: (ow.achievements || []).join('\n'), after: (w.achievements || []).join('\n') })
+    })
+    optimized.projects.forEach((p, i) => {
+      const op = original.projects[i]
+      if (!op) return
+      if (op.description !== p.description) diffs.push({ section: `项目经验 #${i+1}`, field: '描述', before: op.description, after: p.description })
+      if (JSON.stringify(op.highlights) !== JSON.stringify(p.highlights)) diffs.push({ section: `项目经验 #${i+1}`, field: '亮点', before: (op.highlights || []).join('\n'), after: (p.highlights || []).join('\n') })
+    })
+    return diffs
+  }
+
+  const handleFullPolish = async () => {
+    if (!isAiConfigured()) {
+      setPolishSnackbar('请先在 AI 配置中设置接口和密钥')
+      return
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [handleUndo, handleRedo])
+    setPolishOpen(true)
+    setPolishLoading(true)
+    setPolishDiffs([])
+    setPolishError('')
+    setOptimizedResume(null)
+
+    try {
+      const resume = useResumeStore.getState().resume
+      const result = await optimizeFullResume(aiConfig, resume)
+      const diffs = computeDiffs(resume, result)
+      setPolishDiffs(diffs)
+      setOptimizedResume(result)
+    } catch (e: any) {
+      setPolishError(e.message || 'AI 调用失败')
+    } finally {
+      setPolishLoading(false)
+    }
+  }
+
+  const handleApplyFull = () => {
+    if (optimizedResume) {
+      importResume(optimizedResume)
+    }
+    setPolishOpen(false)
+    setPolishSnackbar('AI 全文润色已应用 ✅')
+  }
 
   // ── Section labels for drag-drop UI ──
   const SECTION_LABELS: Record<string, string> = {
@@ -248,9 +271,31 @@ const EditorLayout: React.FC = () => {
               </span>
             </Tooltip>
             <Divider sx={{ width: '80%', my: 0.5 }} />
+            <Tooltip title="AI 全文润色 — 通读整份简历后统一优化" placement="right">
+              <IconButton
+                size="small"
+                onClick={handleFullPolish}
+                sx={{
+                  color: '#fff',
+                  bgcolor: 'primary.main',
+                  width: 36,
+                  height: 36,
+                  '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.1)' },
+                  transition: 'all 0.15s',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                }}
+              >
+                <AiIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={themeMode === 'dark' ? '切换亮色模式' : '切换深色模式'} placement="right">
           <IconButton size="small" onClick={toggleTheme} sx={{ color: 'text.secondary' }}>
             {themeMode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={locale === 'zh' ? 'Switch to English' : '切换到中文'} placement="right">
+          <IconButton size="small" onClick={toggleLocale} sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 700, width: 36 }}>
+            {locale === 'zh' ? 'EN' : '中'}
           </IconButton>
         </Tooltip>
         <Tooltip title="清空所有数据" placement="right">
@@ -259,16 +304,17 @@ const EditorLayout: React.FC = () => {
           </IconButton>
         </Tooltip>
         <Tooltip title="填入示例数据" placement="right">
-          <IconButton size="small" color="primary" onClick={() => { if (confirm('当前数据将被覆盖，确定？')) { pushState(resumeData); resetResume() } }}>
+          <IconButton size="small" color="primary" onClick={() => { const r = useResumeStore.getState().resume; if (confirm('当前数据将被覆盖，确定？')) { pushState(r); resetResume() } }}>
             <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>示例</Typography>
           </IconButton>
         </Tooltip>
         <Tooltip title="导出 JSON 数据" placement="right">
           <IconButton size="small" color="info" onClick={() => {
-            const blob = new Blob([JSON.stringify(resumeData, null, 2)], { type: 'application/json' })
+            const r = useResumeStore.getState().resume
+            const blob = new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' })
             const a = document.createElement('a')
             a.href = URL.createObjectURL(blob)
-            a.download = `${resumeData.personal.fullName || 'resume-data'}.json`
+            a.download = `${r.personal.fullName || 'resume-data'}.json`
             a.click()
             URL.revokeObjectURL(blob)
           }}>
@@ -442,6 +488,23 @@ const EditorLayout: React.FC = () => {
           <ResumePreview />
         </ErrorBoundary>
       </Box>
+      {/* AI 全文润色弹窗 */}
+      <FullPolishDialog
+        open={polishOpen}
+        diffs={polishDiffs}
+        loading={polishLoading}
+        error={polishError}
+        onApply={handleApplyFull}
+        onClose={() => setPolishOpen(false)}
+      />
+      <Snackbar
+        open={!!polishSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setPolishSnackbar('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" variant="filled" sx={{ fontSize: '0.85rem' }}>{polishSnackbar}</Alert>
+      </Snackbar>
     </Box>
   )
 }

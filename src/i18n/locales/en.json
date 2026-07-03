@@ -1,0 +1,192 @@
+{
+  "app": {
+    "title": "Resume Editor",
+    "saveIndicator": "✓ Auto-saved",
+    "saving": "Saving…"
+  },
+  "sidebar": {
+    "personal": "Personal",
+    "profile": "Profile",
+    "education": "Education",
+    "work": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certificates",
+    "templates": "Templates",
+    "aiConfig": "AI Config",
+    "exportJson": "Export JSON",
+    "importJson": "Import JSON",
+    "sampleData": "Sample",
+    "resetData": "Reset",
+    "toggleTheme": "Toggle dark mode",
+    "toggleThemeLight": "Toggle light mode",
+    "undo": "Undo Ctrl+Z",
+    "redo": "Redo Ctrl+Shift+Z",
+    "fullPolish": "AI Full Polish — optimize entire resume",
+    "reorderSections": "Reorder sections",
+    "dragReorderHint": "Drag to reorder sections",
+    "hideSection": "Hide this section",
+    "showSection": "Show this section",
+    "visible": "Visible",
+    "hidden": "Hidden"
+  },
+  "editor": {
+    "personal": {
+      "title": "Personal Info",
+      "avatar": "Avatar",
+      "avatarHint": "Click to upload, 1:1 square recommended",
+      "name": "Full Name *",
+      "jobTitle": "Job Title",
+      "phone": "Phone *",
+      "email": "Email *",
+      "city": "Location",
+      "website": "Website",
+      "github": "GitHub"
+    },
+    "profile": {
+      "title": "Profile",
+      "label": "Profile Summary",
+      "placeholder": "Frontend developer with 4 years of experience…",
+      "aiButton": "AI Polish",
+      "polishing": "Polishing…"
+    },
+    "work": {
+      "title": "Work Experience",
+      "add": "Add",
+      "empty": "No work experience yet. Click \"Add\" to create one.",
+      "company": "Company *",
+      "position": "Position *",
+      "startDate": "Start *",
+      "endDate": "End *",
+      "description": "Description *",
+      "achievements": "Achievements",
+      "addAchievement": "+ Add Achievement",
+      "aiDescription": "AI Polish",
+      "aiAchievements": "AI Polish"
+    },
+    "education": {
+      "title": "Education",
+      "add": "Add",
+      "empty": "No education yet. Click \"Add\" to create one.",
+      "school": "School *",
+      "major": "Major *",
+      "degree": "Degree *",
+      "startDate": "Start *",
+      "endDate": "End *",
+      "gpa": "GPA",
+      "honors": "Honors",
+      "addHonor": "+ Add Honor"
+    },
+    "projects": {
+      "title": "Projects",
+      "add": "Add",
+      "empty": "No projects yet. Click \"Add\" to create one.",
+      "name": "Project Name *",
+      "role": "Role *",
+      "startDate": "Start",
+      "endDate": "End",
+      "description": "Description *",
+      "techStack": "Tech Stack",
+      "addTech": "+ Add Tech",
+      "highlights": "Highlights",
+      "addHighlight": "+ Add Highlight",
+      "githubUrl": "GitHub URL",
+      "demoUrl": "Demo URL"
+    },
+    "skills": {
+      "title": "Skills",
+      "addGroup": "Add Group",
+      "empty": "No skill groups yet. Click \"Add Group\" to create one.",
+      "groupName": "Group Name *",
+      "tags": "Tags * (at least 1)",
+      "addTag": "Add",
+      "tagPlaceholder": "Type skill and press Enter"
+    },
+    "certificates": {
+      "title": "Certificates & Languages",
+      "certificates": "📜 Certificates",
+      "certPlaceholder": "Enter certificate name",
+      "addCert": "Add",
+      "languages": "Languages",
+      "addLang": "Add",
+      "langName": "Language *",
+      "langLevel": "Level *",
+      "emptyLang": "No languages added"
+    },
+    "fieldTips": {
+      "jobTitle": "Highly recommended — HR checks this first",
+      "city": "Include if open to relocation",
+      "github": "Essential for tech roles",
+      "profile": "50-100 words highlighting 1-3 key strengths",
+      "gpa": "Include if above 3.5/4.0",
+      "achievements": "Use metrics to highlight your impact"
+    }
+  },
+  "templates": {
+    "title": "Choose Template",
+    "upload": "Upload",
+    "hint": "Select a template. The preview updates in real time.",
+    "builtIn": "Built-in",
+    "uploadTitle": "Upload Custom Template",
+    "uploadInfo": "Templates use HTML + CSS with {{field}} placeholders for data binding.",
+    "selectFile": "Select HTML File",
+    "name": "Template Name *",
+    "description": "Description",
+    "author": "Author",
+    "pasteHtml": "Or paste HTML code below",
+    "cancel": "Cancel",
+    "confirm": "Upload",
+    "checkPass": "Template check passed",
+    "checkFail": "Fix errors before uploading",
+    "sections": "Detected sections"
+  },
+  "ai": {
+    "configTitle": "🤖 AI Configuration",
+    "provider": "Provider",
+    "baseURL": "Base URL",
+    "apiKey": "API Key",
+    "model": "Model",
+    "industry": "Industry / Role",
+    "industryHint": "AI tailors wording to your industry",
+    "fetchModels": "Fetch Models",
+    "fetching": "Fetching…",
+    "selectFetched": "Pick from API ▼",
+    "autoConfigured": "Auto-configured",
+    "customEndpointHint": "Enter an OpenAI-compatible endpoint",
+    "auth": "Authentication",
+    "localConfig": "Local Config (JSON)",
+    "copyConfig": "Copy config",
+    "notConfigured": "Configure AI in the sidebar first",
+    "polishSuccess": "AI polish complete ✅",
+    "polishFailed": "AI call failed"
+  },
+  "fullPolish": {
+    "title": "🤖 AI Full Polish Report",
+    "loading": "AI is reading your resume and optimizing…",
+    "noChanges": "No changes needed",
+    "apply": "Apply All Changes",
+    "cancel": "Cancel",
+    "changes": "changes",
+    "before": "Before",
+    "after": "After"
+  },
+  "export": {
+    "fileName": "resume"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "complete": "Done",
+    "configNotSet": "Please configure AI in the sidebar first",
+    "emptyContent": "Please fill in the content first"
+  },
+  "reset": {
+    "confirm": "Clear all resume data? This cannot be undone!",
+    "overwriteConfirm": "Current data will be overwritten. Continue?"
+  },
+  "errors": {
+    "jsonFormat": "Invalid JSON format",
+    "apiFailed": "API request failed"
+  }
+}

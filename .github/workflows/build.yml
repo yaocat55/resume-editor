@@ -54,7 +54,7 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           NEXT="$MAJOR.$MINOR.$((PATCH + 1))"
-          TAG="v$NEXT"
+          TAG="v$NEXT"0
 
           echo "Current: v$VERSION"
           echo "Next:    $TAG"

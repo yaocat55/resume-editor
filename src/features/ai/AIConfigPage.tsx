@@ -7,7 +7,7 @@ import {
   Menu, ListSubheader, Divider,
 } from '@mui/material'
 import { ExpandMore as ExpandIcon, ExpandLess as CollapseIcon, ContentCopy as CopyIcon, OpenInNew as LinkIcon, CloudDownload as FetchIcon } from '@mui/icons-material'
-import useAIStore, { PRESETS, getPreset } from '../../store/aiStore'
+import useAIStore, { PRESETS, getPreset } from './store'
 
 /* ── Provider 类别标签映射 ── */
 const CATEGORY_LABEL: Record<string, { label: string; color: string }> = {
@@ -108,6 +108,14 @@ const AIConfigPage: React.FC = () => {
   const [fetchLoading, setFetchLoading] = useState(false)
   const [fetchError, setFetchError] = useState('')
   const [modelMenuAnchor, setModelMenuAnchor] = useState<HTMLElement | null>(null)
+  const [saved, setSaved] = useState(true)
+  const saveTimerRef = React.useRef<ReturnType<typeof setTimeout>>()
+  // 配置变更时短暂显示「已保存」
+  React.useEffect(() => {
+    setSaved(false)
+    clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => setSaved(true), 800)
+  }, [config])
 
   const fetchModels = useCallback(async () => {
     if (!config.baseURL || !config.apiKey) {
@@ -150,7 +158,20 @@ const AIConfigPage: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>🤖 AI 配置</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+        <Typography variant="h6" sx={{ color: 'primary.main' }}>🤖 AI 配置</Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: saved ? 'success.main' : 'text.disabled',
+            transition: 'color 0.3s',
+            fontWeight: 500,
+            fontSize: '0.7rem',
+          }}
+        >
+          {saved ? '✓ 已自动保存' : '保存中…'}
+        </Typography>
+      </Box>
 
       {/* 服务商选择 */}
       <Card variant="outlined" sx={{ mb: 2 }}>

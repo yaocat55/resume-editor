@@ -13,6 +13,18 @@ html, body, #root {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* MUI surface transition for smooth theme switching */
+#root,
+.MuiPaper-root,
+.MuiCard-root,
+.MuiDialog-paper,
+.MuiMenu-paper,
+.MuiOutlinedInput-root,
+.MuiTableCell-root {
+  transition: background-color 0.35s ease, color 0.35s ease, border-color 0.25s ease !important;
 }
 
 /* Scrollbar styling - light */

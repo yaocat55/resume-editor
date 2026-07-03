@@ -15,7 +15,7 @@ import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import PromptDialog from './PromptDialog'
 import MonthPicker from './MonthPicker'
-import FieldTip from '../FieldTip'
+import FieldTip from '../shared/FieldTip'
 
 const degrees = ['本科', '硕士', '博士', '专科'] as const
 

@@ -15,17 +15,18 @@ import {
 } from '@mui/material'
 import { Add as AddIcon, Close as CloseIcon, AutoAwesome as AiIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
-import useAIStore from '../../store/aiStore'
-import { optimizeWorkDescription, optimizeWorkAchievements } from '../../utils/aiService'
+import useAIStore from '../../features/ai/store'
+import { optimizeWorkDescription, optimizeWorkAchievements } from '../../features/ai/service'
 import PromptDialog from './PromptDialog'
 import MonthPicker from './MonthPicker'
-import FieldTip from '../FieldTip'
+import FieldTip from '../shared/FieldTip'
 
 const WorkEditor: React.FC = () => {
   const work = useResumeStore((s) => s.resume.work)
   const addWork = useResumeStore((s) => s.addWork)
   const updateWork = useResumeStore((s) => s.updateWork)
   const removeWork = useResumeStore((s) => s.removeWork)
+  const resume = useResumeStore((s) => s.resume)
   const aiConfig = useAIStore((s) => s.config)
   const isConfigured = useAIStore((s) => s.isConfigured)
 
@@ -52,7 +53,7 @@ const WorkEditor: React.FC = () => {
     if (!w.description.trim()) { showMsg('请先填写工作描述', 'error'); return }
     setAiLoadingDesc(w.id)
     try {
-      const result = await optimizeWorkDescription(aiConfig, w.company, w.position, w.description)
+      const result = await optimizeWorkDescription(aiConfig, resume, w.id)
       updateWork(w.id, { description: result })
       showMsg('AI 润色完成 ✅', 'success')
     } catch (e: any) {
@@ -68,7 +69,7 @@ const WorkEditor: React.FC = () => {
     if (items.length === 0) { showMsg('请先添加量化成果', 'error'); return }
     setAiLoadingAch(w.id)
     try {
-      const result = await optimizeWorkAchievements(aiConfig, w.company, w.position, items)
+      const result = await optimizeWorkAchievements(aiConfig, resume, w.id)
       updateWork(w.id, { achievements: result })
       showMsg('AI 润色完成 ✅', 'success')
     } catch (e: any) {

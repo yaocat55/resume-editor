@@ -15,8 +15,8 @@ import {
 } from '@mui/material'
 import { Add as AddIcon, Close as CloseIcon, AutoAwesome as AiIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
-import useAIStore from '../../store/aiStore'
-import { optimizeProjectDescription, optimizeProjectHighlights } from '../../utils/aiService'
+import useAIStore from '../../features/ai/store'
+import { optimizeProjectDescription, optimizeProjectHighlights } from '../../features/ai/service'
 import PromptDialog from './PromptDialog'
 import MonthPicker from './MonthPicker'
 
@@ -25,6 +25,7 @@ const ProjectEditor: React.FC = () => {
   const addProject = useResumeStore((s) => s.addProject)
   const updateProject = useResumeStore((s) => s.updateProject)
   const removeProject = useResumeStore((s) => s.removeProject)
+  const resume = useResumeStore((s) => s.resume)
   const aiConfig = useAIStore((s) => s.config)
   const isConfigured = useAIStore((s) => s.isConfigured)
 
@@ -52,7 +53,7 @@ const ProjectEditor: React.FC = () => {
     if (!p.description.trim()) { showMsg('请先填写项目描述', 'error'); return }
     setAiLoadingDesc(p.id)
     try {
-      const result = await optimizeProjectDescription(aiConfig, p.name, p.role, p.description)
+      const result = await optimizeProjectDescription(aiConfig, resume, p.id)
       updateProject(p.id, { description: result })
       showMsg('AI 润色完成 ✅', 'success')
     } catch (e: any) {
@@ -68,7 +69,7 @@ const ProjectEditor: React.FC = () => {
     if (items.length === 0) { showMsg('请先添加亮点/成果', 'error'); return }
     setAiLoadingHl(p.id)
     try {
-      const result = await optimizeProjectHighlights(aiConfig, p.name, items)
+      const result = await optimizeProjectHighlights(aiConfig, resume, p.id)
       updateProject(p.id, { highlights: result })
       showMsg('AI 润色完成 ✅', 'success')
     } catch (e: any) {

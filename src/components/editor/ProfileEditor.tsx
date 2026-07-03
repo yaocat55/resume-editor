@@ -2,13 +2,14 @@ import React, { useState } from 'react'
 import { Box, TextField, Typography, Card, CardContent, Button, Snackbar, Alert, Tooltip } from '@mui/material'
 import { AutoAwesome as AiIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
-import useAIStore from '../../store/aiStore'
-import { optimizeProfile } from '../../utils/aiService'
-import FieldTip from '../FieldTip'
+import useAIStore from '../../features/ai/store'
+import { optimizeProfile } from '../../features/ai/service'
+import FieldTip from '../shared/FieldTip'
 
 const ProfileEditor: React.FC = () => {
   const profile = useResumeStore((s) => s.resume.profile)
   const updateProfile = useResumeStore((s) => s.updateProfile)
+  const resume = useResumeStore((s) => s.resume)
   const aiConfig = useAIStore((s) => s.config)
   const isConfigured = useAIStore((s) => s.isConfigured)
 
@@ -28,7 +29,7 @@ const ProfileEditor: React.FC = () => {
     }
     setAiLoading(true)
     try {
-      const result = await optimizeProfile(aiConfig, profile)
+      const result = await optimizeProfile(aiConfig, resume)
       updateProfile(result)
       setSnackbar({ open: true, message: 'AI 润色完成 ✅', severity: 'success' })
     } catch (e: any) {

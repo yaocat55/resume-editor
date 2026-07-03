@@ -1,17 +1,37 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import {
   Box,
   TextField,
   Typography,
   Card,
   CardContent,
+  Avatar,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
+import { Close as CloseIcon, PhotoCamera as CameraIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
-import FieldTip from '../FieldTip'
+import FieldTip from '../shared/FieldTip'
 
 const PersonalEditor: React.FC = () => {
   const personal = useResumeStore((s) => s.resume.personal)
   const updatePersonal = useResumeStore((s) => s.updatePersonal)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      updatePersonal({ avatar: reader.result as string })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemove = () => {
+    updatePersonal({ avatar: '' })
+    if (fileRef.current) fileRef.current.value = ''
+  }
 
   return (
     <Box>
@@ -20,6 +40,63 @@ const PersonalEditor: React.FC = () => {
       </Typography>
       <Card variant="outlined">
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2, '&:last-child': { pb: 2 } }}>
+          {/* 头像 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ position: 'relative' }}>
+              <Avatar
+                src={personal.avatar || undefined}
+                sx={{
+                  width: 72,
+                  height: 72,
+                  cursor: 'pointer',
+                  border: '2px dashed',
+                  borderColor: 'divider',
+                  bgcolor: 'action.hover',
+                  '&:hover': { borderColor: 'primary.main', opacity: 0.8 },
+                  transition: 'all 0.15s',
+                }}
+                onClick={() => fileRef.current?.click()}
+              >
+                <CameraIcon sx={{ fontSize: 28, color: 'text.disabled' }} />
+              </Avatar>
+              {personal.avatar && (
+                <Tooltip title="移除头像">
+                  <IconButton
+                    size="small"
+                    onClick={handleRemove}
+                    sx={{
+                      position: 'absolute',
+                      top: -6,
+                      right: -6,
+                      bgcolor: 'background.paper',
+                      boxShadow: 1,
+                      width: 22,
+                      height: 22,
+                      '&:hover': { bgcolor: 'error.light' },
+                    }}
+                  >
+                    <CloseIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
+                头像
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem' }}>
+                点击上传，推荐 1:1 正方形图片
+              </Typography>
+            </Box>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFile}
+            />
+          </Box>
+
           <TextField
             label={
               <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -102,4 +179,4 @@ const PersonalEditor: React.FC = () => {
   )
 }
 
-export default PersonalEditor
+export default React.memo(PersonalEditor)

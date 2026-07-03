@@ -20,8 +20,10 @@
     "@mui/x-date-pickers": "^9.7.0",
     "dayjs": "^1.11.21",
     "dompurify": "^3.4.11",
+    "i18next": "^26.3.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-i18next": "^17.0.8",
     "uuid": "^14.0.1",
     "zustand": "^5.0.14"
   },
