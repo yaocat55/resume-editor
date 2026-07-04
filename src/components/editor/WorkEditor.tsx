@@ -1,3 +1,9 @@
+/**
+ * WorkEditor — 工作经历编辑
+ *
+ * 每条工作经历：公司、职位、时间、描述、量化成果（chip 列表）。
+ * 集成分段 AI 润色（描述 + 成果）。
+ */
 import React, { useState } from 'react'
 import {
   Box,

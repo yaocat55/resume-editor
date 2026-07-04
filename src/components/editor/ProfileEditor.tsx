@@ -1,3 +1,8 @@
+/**
+ * ProfileEditor — 个人简介编辑
+ *
+ * 单个多行文本框 + AI 润色按钮。
+ */
 import React, { useState } from 'react'
 import { Box, TextField, Typography, Card, CardContent, Button, Snackbar, Alert, Tooltip } from '@mui/material'
 import { AutoAwesome as AiIcon } from '@mui/icons-material'

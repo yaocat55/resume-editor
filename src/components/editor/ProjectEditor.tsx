@@ -1,3 +1,9 @@
+/**
+ * ProjectEditor — 项目经验编辑
+ *
+ * 每条项目：名称、角色、时间、描述、技术栈、亮点、链接。
+ * 集成 AI 润色（描述 + 亮点）。
+ */
 import React, { useState } from 'react'
 import {
   Box,

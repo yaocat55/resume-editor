@@ -1,3 +1,13 @@
+/**
+ * EditorLayout — 主布局组件
+ *
+ * 三栏布局：
+ *   左侧 80px 导航栏（Tab 切换 + 工具按钮）
+ *   中间 480px 编辑面板（各编辑器组件）
+ *   右侧 弹性预览区（Shadow DOM 渲染简历预览）
+ *
+ * 职责：布局编排、Tab 切换、Undo/Redo、全文 AI 润色
+ */
 import React, { useState, useCallback } from 'react'
 import {
   Box,
@@ -197,7 +207,7 @@ const EditorLayout: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
-      {/* Left Sidebar - Navigation */}
+      {/* ─── 左侧导航栏（80px） ─── */}
       <Paper
         sx={{
           width: 80,

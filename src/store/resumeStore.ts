@@ -1,3 +1,10 @@
+/**
+ * resumeStore — 简历数据全局状态
+ *
+ * 存储所有简历字段（personal / profile / education / work / projects / skills / certificates）
+ * 以及板块可见性（visibleSections）和排序（sectionOrder）。
+ * 使用 Zustand persist 中间件自动保存到 localStorage（key: resume-data）。
+ */
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'

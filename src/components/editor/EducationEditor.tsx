@@ -1,3 +1,8 @@
+/**
+ * EducationEditor — 教育经历编辑
+ *
+ * 学校、专业、学历、时间、GPA、荣誉奖项（chip 列表）。
+ */
 import React, { useState } from 'react'
 import {
   Box,

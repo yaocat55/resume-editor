@@ -1,3 +1,8 @@
+/**
+ * ErrorBoundary — 错误边界
+ *
+ * 包裹每个编辑器面板和预览区，捕获渲染异常并显示重试按钮。
+ */
 import React from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { Refresh as RefreshIcon } from '@mui/icons-material'

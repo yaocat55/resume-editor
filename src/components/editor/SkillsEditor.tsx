@@ -1,3 +1,8 @@
+/**
+ * SkillsEditor — 专业技能编辑
+ *
+ * 技能分组（分组名 + 标签列表），支持添加/删除标签。
+ */
 import React, { useState } from 'react'
 import {
   Box,

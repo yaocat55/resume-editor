@@ -1,3 +1,9 @@
+/**
+ * undoStore — Undo/Redo 历史栈
+ *
+ * 独立于 resumeStore，不持久化。
+ * 最大 30 步历史，由 useUndo hook 自动订阅 resume 变更并推入快照。
+ */
 import { create } from 'zustand'
 import type { Resume } from '../types/resume'
 

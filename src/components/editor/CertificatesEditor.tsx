@@ -1,3 +1,8 @@
+/**
+ * CertificatesEditor — 证书 & 语言编辑
+ *
+ * 证书列表（chip 内联编辑）+ 语言列表（成对输入）。
+ */
 import React, { useState } from 'react'
 import {
   Box,

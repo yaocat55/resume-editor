@@ -1,3 +1,8 @@
+/**
+ * themeStore — 深色/浅色主题状态
+ *
+ * 持久化到 localStorage（key: app-theme）。
+ */
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 

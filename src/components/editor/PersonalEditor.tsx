@@ -1,3 +1,8 @@
+/**
+ * PersonalEditor — 个人信息编辑表单
+ *
+ * 字段：头像（base64 上传）、姓名、求职意向、手机、邮箱、城市、网站、GitHub
+ */
 import React, { useRef } from 'react'
 import {
   Box,

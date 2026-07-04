@@ -1,3 +1,9 @@
+/**
+ * FullPolishDialog — AI 全文润色结果对比弹窗
+ *
+ * 接收 AI 返回的 diff（修改前/修改后），逐条展示，用户确认后批量应用。
+ * 浅色/深色模式自适应（左侧色条指示差异类型）。
+ */
 import React from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
