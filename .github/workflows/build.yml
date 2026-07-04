@@ -8,7 +8,35 @@ permissions:
   contents: write
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+      version: ${{ steps.bump.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump version
+        id: bump
+        shell: bash
+        run: |
+          LATEST_TAG=$(git tag -l "v*" | sort -V | tail -1) || echo "v0.0.0"
+          LATEST_TAG=${LATEST_TAG:-v0.0.0}
+          VERSION=${LATEST_TAG#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          NEXT="$MAJOR.$MINOR.$((PATCH + 1))"
+          TAG="v$NEXT"
+
+          echo "Latest tag: $LATEST_TAG"
+          echo "Next:       $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: version
     runs-on: windows-latest
 
     steps:
@@ -19,6 +47,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      - name: Set version
+        shell: bash
+        run: |
+          node -e "
+            const p = require('./package.json');
+            p.version = '${{ needs.version.outputs.version }}';
+            require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');
+          "
 
       - name: Install dependencies
         run: npm ci
@@ -36,7 +73,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
 
     steps:
@@ -44,45 +81,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Bump version & create tag
-        id: bump
+      - name: Create tag
         shell: bash
         run: |
-          # 读取最新 tag 作为基线，避免依赖 package.json 是否被前次 CI 更新
-          LATEST_TAG=$(git tag -l "v*" | sort -V | tail -1) || echo "v0.0.0"
-          LATEST_TAG=${LATEST_TAG:-v0.0.0}
-          VERSION=${LATEST_TAG#v}
-
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          NEXT="$MAJOR.$MINOR.$((PATCH + 1))"
-          TAG="v$NEXT"
-
-          echo "Latest tag: $LATEST_TAG"
-          echo "Next:       $TAG"
-
-          # 如果 tag 已被 CI 创建但推送失败，直接复用
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG exists, reusing."
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-            exit 0
+          TAG="${{ needs.version.outputs.tag }}"
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            node -e "
+              const p = require('./package.json');
+              p.version = '${{ needs.version.outputs.version }}';
+              require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');
+            "
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git add package.json
+            git commit --allow-empty -m "chore: bump to $TAG [skip ci]"
+            git tag "$TAG"
           fi
-
-          # 更新 package.json + 本地 tag
-          node -e "
-            const p = require('./package.json');
-            p.version = '$NEXT';
-            require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');
-          "
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add package.json
-          git commit --allow-empty -m "chore: bump to $TAG [skip ci]"
-          git tag "$TAG"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Using tag: $TAG"
 
       - name: Push tag
-        run: git push origin "${{ steps.bump.outputs.tag }}"
+        run: git push origin "${{ needs.version.outputs.tag }}" || true
 
       - name: Download installer
         uses: actions/download-artifact@v4
@@ -93,8 +111,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.bump.outputs.tag }}
-          name: ${{ steps.bump.outputs.tag }}
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.tag }}
           files: release-artifacts/*
           draft: false
           generate_release_notes: true
