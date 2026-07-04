@@ -77,10 +77,18 @@ npm run build:electron
 | 供应商 | 自动配置 |
 |--------|---------|
 | **DeepSeek** | `api.deepseek.com` + V4 Flash / V4 Pro |
-| **硅基流动** | `api.siliconflow.cn/v1` + DeepSeek / QwQ / GLM 等 |
+| **智谱 GLM** | `open.bigmodel.cn` + GLM-4 系列 |
+| **阿里通义千问** | `dashscope.aliyuncs.com` + Qwen 系列 |
+| **火山引擎** | `ark.cn-beijing.volces.com` + Doubao 系列 |
+| **Kimi** | `api.moonshot.cn` + Moonshot 系列 |
+| **阶跃星辰** | `api.stepfun.com` + Step 系列 |
+| **百川智能** | `api.baichuan-ai.com` + Baichuan 系列 |
+| **硅基流动** | `api.siliconflow.cn` + DeepSeek / QwQ / GLM / 混元 |
+| **ModelScope** | `api.modelscope.cn` + 开源模型 |
+| **CCSub** | 聚合中转站 |
+| **OpenRouter** | 全球模型聚合平台 |
+| **神算云** | AI API 聚合平台 |
 | **OpenAI** | `api.openai.com/v1` + GPT-4o 系列 |
-| **CCSub / OpenRouter** | 聚合中转，多模型可选 |
-| **自定义** | 任意兼容地址 |
 
 点击「获取模型」可从 API 拉取实时模型列表。
 
@@ -111,23 +119,25 @@ npm run build:electron
 ```
 resume-editor/
 ├── electron/                # Electron 主进程
-│   ├── main.cjs             # 窗口创建、IPC、菜单
+│   ├── main.cjs             # 窗口创建、IPC、菜单、CSP
 │   └── preload.cjs          # contextBridge 预加载
 ├── src/
-│   ├── features/            # 按功能聚合的模块
-│   │   └── ai/              # AI 润色（store + service + 页面）
+│   ├── features/ai/         # AI 润色功能模块
+│   │   ├── AIConfigPage.tsx  # 配置页面
+│   │   ├── store.ts          # 配置状态 + 13 家供应商预设
+│   │   └── service.ts        # API 调用 + prompt
 │   ├── components/
-│   │   ├── editor/          # 各编辑器组件
-│   │   ├── preview/         # Shadow DOM 预览
-│   │   ├── layout/          # 编辑器布局
-│   │   └── shared/          # 共享小组件
-│   ├── hooks/               # 自定义 hooks
-│   │   └── useUndo.ts       # Undo/Redo 逻辑
-│   ├── templates/           # 10 款简历模板
-│   ├── store/               # Zustand 状态
-│   ├── i18n/                # 国际化文件
-│   └── types/               # TypeScript 类型
-├── .github/workflows/       # CI/CD
+│   │   ├── editor/           # 各编辑器组件
+│   │   ├── preview/          # Shadow DOM 实时预览
+│   │   ├── layout/           # 三栏主布局
+│   │   └── shared/           # 通用小组件
+│   ├── hooks/                # 自定义 hooks
+│   │   └── useUndo.ts        # Undo/Redo 逻辑
+│   ├── templates/            # 10 款简历模板
+│   ├── store/                # 全局状态管理
+│   ├── i18n/                 # 国际化
+│   └── types/                # TypeScript 类型定义
+├── .github/workflows/        # CI/CD 自动构建 + 发版
 └── package.json
 ```
 
