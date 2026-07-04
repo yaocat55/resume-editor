@@ -70,7 +70,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Push tag
-        run: git push origin --tags
+        run: git push origin HEAD:main --tags
 
       - name: Download installer
         uses: actions/download-artifact@v4
