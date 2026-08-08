@@ -168,10 +168,9 @@ export const bentoTemplateHTML = `<!DOCTYPE html>
       <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2714%27 fill=%27rgba(255,255,255,0.08)%27/%3E%3Ccircle cx=%2750%27 cy=%2736%27 r=%2718%27 fill=%27rgba(255,255,255,0.12)%27/%3E%3Cellipse cx=%2750%27 cy=%2772%27 rx=%2728%27 ry=%2722%27 fill=%27rgba(255,255,255,0.06)%27/%3E%3C/svg%3E" alt="" />
       <div class="personal-info">
         <div id="fullName"></div>
-        <span id="gender" style="font-size:0.85em;opacity:0.7;margin-left:6px;"></span>
         <div id="jobTitle"></div>
         <div class="contact-row">
-          <span id="phone"><span class="val"></span></span>
+          <span id="gender">👤 <span class="val"></span></span><span class="val"></span></span>
           <span id="email"><span class="val"></span></span>
           <span id="location"><span class="val"></span></span>
           <a id="website" href="" target="_blank"><span class="val"></span></a>

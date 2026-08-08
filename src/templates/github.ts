@@ -242,7 +242,6 @@ export const githubTemplateHTML = `<!DOCTYPE html>
     <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2750%27 fill=%27%2321262d%27/%3E%3Ccircle cx=%2750%27 cy=%2738%27 r=%2718%27 fill=%27%238b949e%27/%3E%3Cellipse cx=%2750%27 cy=%2772%27 rx=%2728%27 ry=%2722%27 fill=%27%2330363d%27/%3E%3C/svg%3E" alt="头像" />
     <div class="personal-info">
       <div id="fullName"></div>
-      <span id="gender" style="font-size:0.85em;opacity:0.7;margin-left:6px;"></span>
       <div id="jobTitle"></div>
       <div class="follow-btn">Follow</div>
       <div class="stats-row">
@@ -251,7 +250,7 @@ export const githubTemplateHTML = `<!DOCTYPE html>
         <div class="stat-item"><span class="stat-num" data-stat="stars">12</span><span class="stat-label">Stars</span></div>
       </div>
       <div class="contact-row">
-        <span id="location"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M8 1C5.5 1 3.5 2.9 3.5 5.3c0 2.1 1.6 4.6 4.5 7.7 2.9-3.1 4.5-5.6 4.5-7.7C12.5 2.9 10.5 1 8 1zm0 6c-.9 0-1.5-.7-1.5-1.5S7.1 4 8 4s1.5.7 1.5 1.5S8.9 7 8 7z"/></svg> <span class="val"></span></span>
+        <span id="gender" style="font-size:0.9em;opacity:0.7;">👤 <span class="val"></span></span><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M8 1C5.5 1 3.5 2.9 3.5 5.3c0 2.1 1.6 4.6 4.5 7.7 2.9-3.1 4.5-5.6 4.5-7.7C12.5 2.9 10.5 1 8 1zm0 6c-.9 0-1.5-.7-1.5-1.5S7.1 4 8 4s1.5.7 1.5 1.5S8.9 7 8 7z"/></svg> <span class="val"></span></span>
         <span id="email"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M1 3.5v9l.5.5h13l.5-.5v-9l-.5-.5h-13l-.5.5zM8 8.8L2.2 4h11.6L8 8.8zM2 12V5.2l6 4.8 6-4.8V12H2z"/></svg> <span class="val"></span></span>
         <a id="website" href="" target="_blank"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M6.5 1.5a4 4 0 0 1 4 4c0 .7-.2 1.4-.5 2l1.5 1.5a5.5 5.5 0 1 0-7.8 7.8L5.2 15a4 4 0 0 1 1.3-7.8c.7 0 1.4.2 2 .5L10 6.2a4 4 0 0 0-3.5-4.7z"/><path d="M9.5 14.5a4 4 0 0 1-4-4c0-.7.2-1.4.5-2L4.5 7a5.5 5.5 0 1 0 7.8 7.8l-1.5-1.5a4 4 0 0 1-1.3 1.2z"/></svg> <span class="val"></span></a>
         <a id="github" href="" target="_blank"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M8 1C4.1 1 1 4.3 1 8.2c0 3.2 2 5.9 4.8 6.8.4.1.5-.2.5-.4v-1.4c-1.9.4-2.4-.9-2.4-.9-.3-.8-.8-1-1-1-.8-.6.1-.6.1-.6.9.1 1.4.9 1.4.9.8 1.4 2.1 1 2.6.8.1-.6.3-1 .5-1.2-2-.2-4.1-1-4.1-4.5 0-1 .3-1.8.9-2.4-.1-.2-.4-1.1.1-2.4 0 0 .8-.3 2.5.9.7-.2 1.5-.3 2.3-.3s1.6.1 2.3.3c1.7-1.2 2.5-.9 2.5-.9.5 1.3.2 2.2.1 2.4.6.6.9 1.4.9 2.4 0 3.5-2.1 4.3-4.1 4.5.3.3.6.9.6 1.8v2.7c0 .2.1.5.5.4 2.8-.9 4.8-3.6 4.8-6.8C15 4.3 11.9 1 8 1z"/></svg> <span class="val"></span></a>
