@@ -67,15 +67,16 @@ const ShadowPage = React.memo<{
     }
     const d = document.createElement('div'); d.innerHTML = bodyHTML
     while (d.firstChild) r.appendChild(d.firstChild)
-    if (!single && page > 0) injectContHeader(r, page, tid, data.personal.fullName || '简历')
 
-    // Always show all sections — paging is handled by viewport offset
-    // BUT hide first-page-only sections on page 2+
+    // Only inject continuation header and hide first-page sections on page 2+
     if (!single && page > 0) {
+      injectContHeader(r, page, tid, data.personal.fullName || '简历')
       const hideCss = document.createElement('style')
       hideCss.textContent = `#personal,#profile,.profile-banner{display:none!important}`
       r.appendChild(hideCss)
     }
+
+    // Use visibility map to only show sections assigned to this page
     populateShadowDOM(r, data, vis, order)
   }, [cssText,bodyHTML,data,vis,order,page,single,tid])
   return <div ref={hostRef} style={single?{width:'210mm'}:{width:'210mm',height:'297mm',flexShrink:0}}/>
