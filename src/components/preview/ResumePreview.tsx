@@ -112,19 +112,27 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
       // Data + page breaks
       populateShadowDOM(root, data, visibleSections, sectionOrder)
 
-      // Only line separators when pagination is enabled
+      // Inject A4 page break guides into Shadow DOM — only if pagination toggle is ON
       if (showPageBreaks) {
-        const pageHeightPx = 1122 // A4 height at 96dpi
-        const totalHeight = resumePage.scrollHeight
+        const resumePage = root.querySelector('.resume-page') as HTMLElement | null
+        if (resumePage) {
+          resumePage.style.position = 'relative'
+          const existing = resumePage.querySelectorAll('.page-line')
+          existing.forEach((e) => e.remove())
+        }
+        // Delay to ensure layout is calculated
+        setTimeout(() => {
+          const page = root.querySelector('.resume-page') as HTMLElement | null
+          if (!page) return
+          if (page.scrollHeight <= 1122) return
 
-        if (totalHeight > pageHeightPx) {
-          const pageCount = Math.ceil(totalHeight / pageHeightPx)
+          const pageCount = Math.ceil(page.scrollHeight / 1122)
           for (let i = 1; i < pageCount; i++) {
             const line = document.createElement('div')
             line.className = 'page-line'
             line.style.cssText = `
               position: absolute;
-              top: ${i * pageHeightPx}px;
+              top: ${i * 1122}px;
               left: 0;
               right: 0;
               height: 0;
@@ -144,9 +152,9 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
               padding: 0 4px;
             `
             line.appendChild(label)
-            resumePage.appendChild(line)
+            page.appendChild(line)
           }
-        }
+        }, 100)
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cssText, bodyHTML])
