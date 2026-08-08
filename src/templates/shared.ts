@@ -4,7 +4,7 @@ import type { Resume } from '../types/resume'
  * Template for a skill group (used for cloning).
  */
 export const SKILL_GROUP_HTML = `
-<div class="skill-group">
+<div class="skill-group" data-type="">
   <span class="group-name"></span>
   <span class="skill-tags"></span>
 </div>`
@@ -105,6 +105,7 @@ export function populateShadowDOM(
   const pf = data.personal
   showOrHide('#personal', 'personal')
   if (pf.fullName) setText(root, '#fullName', pf.fullName)
+  if (pf.gender) setText(root, '#gender', pf.gender)
   if (pf.jobTitle) setText(root, '#jobTitle', pf.jobTitle)
   setVal('#phone', pf.phone)
   setVal('#email', pf.email)
@@ -182,11 +183,17 @@ function populateSkills(root: ShadowRoot, data: Resume): void {
   for (const group of data.skills.groups) {
     const groupEl = createElement(SKILL_GROUP_HTML)
     setText(groupEl, '.group-name', group.name)
+    // 标记技能类型：core / secondary
+    groupEl.querySelector('.skill-group')?.setAttribute('data-type', group.type || 'core')
     const tagsEl = groupEl.querySelector('.skill-tags')
     if (tagsEl) {
       for (const item of group.items) {
         const tagEl = createElement(SKILL_TAG_HTML)
         tagEl.textContent = item
+        // 次要技能用浅色样式
+        if (group.type === 'secondary') {
+          tagEl.classList.add('secondary')
+        }
         tagsEl.appendChild(tagEl)
       }
     }

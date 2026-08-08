@@ -13,6 +13,7 @@ import {
   Avatar,
   IconButton,
   Tooltip,
+  MenuItem,
 } from '@mui/material'
 import { Close as CloseIcon, PhotoCamera as CameraIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
@@ -113,6 +114,18 @@ const PersonalEditor: React.FC = () => {
             placeholder="张明"
             required
           />
+          <TextField
+            label="性别"
+            select
+            value={personal.gender || ''}
+            onChange={(e) => updatePersonal({ gender: e.target.value })}
+            sx={{ flex: 1 }}
+            slotProps={{ inputLabel: { shrink: true } }}
+          >
+            {['男', '女'].map((g) => (
+              <MenuItem key={g} value={g}>{g}</MenuItem>
+            ))}
+          </TextField>
           <TextField
             label={
               <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>

@@ -1,7 +1,7 @@
 /**
  * SkillsEditor — 专业技能编辑
  *
- * 技能分组（分组名 + 标签列表），支持添加/删除标签。
+ * 技能分组，区分核心竞争力（core）和加分项（secondary），显示不同颜色。
  */
 import React, { useState } from 'react'
 import {
@@ -14,8 +14,10 @@ import {
   Button,
   Stack,
   Chip,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material'
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material'
+import { Add as AddIcon, Close as CloseIcon, Star as StarIcon, AutoAwesome as SparkleIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 
 const SkillsEditor: React.FC = () => {
@@ -73,6 +75,30 @@ const SkillsEditor: React.FC = () => {
                   required
                 />
                 <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                    技能类型
+                  </Typography>
+                  <ToggleButtonGroup
+                    value={group.type || 'core'}
+                    exclusive
+                    size="small"
+                    onChange={(_, val) => val && updateSkillGroup(index, { type: val })}
+                  >
+                    <ToggleButton
+                      value="core"
+                      sx={{ fontSize: '0.72rem', px: 1.5, gap: 0.5, textTransform: 'none', color: '#6366f1', '&.Mui-selected': { bgcolor: '#eef2ff', color: '#4f46e5' } }}
+                    >
+                      <StarIcon sx={{ fontSize: 14 }} /> 核心竞争力
+                    </ToggleButton>
+                    <ToggleButton
+                      value="secondary"
+                      sx={{ fontSize: '0.72rem', px: 1.5, gap: 0.5, textTransform: 'none', color: '#64748b', '&.Mui-selected': { bgcolor: '#f1f5f9', color: '#475569' } }}
+                    >
+                      <SparkleIcon sx={{ fontSize: 14 }} /> 加分项
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     技能标签 *（至少 1 个）
                   </Typography>
@@ -83,6 +109,8 @@ const SkillsEditor: React.FC = () => {
                         label={item}
                         size="small"
                         onDelete={() => removeSkillTag(index, idx)}
+                        color={group.type !== 'secondary' ? 'primary' : 'default'}
+                        variant={group.type === 'secondary' ? 'outlined' : 'filled'}
                       />
                     ))}
                   </Box>

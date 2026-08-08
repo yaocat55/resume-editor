@@ -65,7 +65,11 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
       root.innerHTML = ''
 
       const baseStyle = document.createElement('style')
-      baseStyle.textContent = `:host { display: block; }`
+      baseStyle.textContent = `
+        :host { display: block; }
+        .skill-tag.secondary { opacity: 0.7; font-weight: 400 !important; }
+        .skill-group[data-type="secondary"] .group-name::after { content: "（加分项）"; font-weight: 400; opacity: 0.6; font-size: 0.75em; }
+      `
       root.appendChild(baseStyle)
 
       if (cssText) {
@@ -112,7 +116,7 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: ${fontFamily}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  @page { size: A4; margin: 15mm; }
+  @page { size: A4; margin: 8mm; }
   .resume-page { min-height: auto !important; overflow: visible !important; }
   .resume-section, .entry, .entry-list { page-break-inside: avoid; }
   .section-title { page-break-after: avoid; }
@@ -164,15 +168,15 @@ const ResumePreview: React.FC = () => {
     const style = document.createElement('style')
     style.id = id
     style.textContent = `
-      @page { margin: 15mm; size: A4; }
-      @media print {
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .resume-page { min-height: auto !important; overflow: visible !important; }
-        .resume-section { page-break-inside: avoid; }
-        .section-title { page-break-after: avoid; }
-        .entry { page-break-inside: avoid; }
-        .entry-list { page-break-inside: avoid; }
-      }
+  @page { size: A4; margin: 8mm; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .resume-page { min-height: auto !important; overflow: visible !important; }
+    .resume-section { page-break-inside: avoid; }
+    .section-title { page-break-after: avoid; }
+    .entry { page-break-inside: avoid; }
+    .entry-list { page-break-inside: avoid; }
+  }
     `
     document.head.appendChild(style)
   }, [])

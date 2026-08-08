@@ -6,6 +6,7 @@
 export interface Personal {
   avatar: string
   fullName: string
+  gender: string
   jobTitle: string
   phone: string
   email: string
@@ -55,6 +56,7 @@ export interface Project {
 export interface SkillGroup {
   name: string
   items: string[]
+  type?: 'core' | 'secondary'
 }
 
 /** 技能 */
@@ -135,6 +137,7 @@ export const defaultResume: Resume = {
   personal: {
     avatar: '',
     fullName: '张明',
+    gender: '男',
     jobTitle: '前端开发工程师',
     phone: '138-0000-8888',
     email: 'ming.zhang@email.com',
@@ -221,14 +224,17 @@ export const defaultResume: Resume = {
     groups: [
       {
         name: '前端',
+        type: 'core',
         items: ['React', 'TypeScript', 'Next.js', 'TailwindCSS', 'Webpack'],
       },
       {
         name: '后端',
+        type: 'core',
         items: ['Node.js', 'Python', 'PostgreSQL', 'Redis'],
       },
       {
         name: '工具',
+        type: 'secondary',
         items: ['Git', 'Docker', 'Vite', 'CI/CD'],
       },
     ],
