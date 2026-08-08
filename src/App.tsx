@@ -14,7 +14,9 @@ import EditorLayout from './components/layout/EditorLayout'
 
 const App: React.FC = () => {
   const mode = useThemeStore((s) => s.mode)
-  const theme = React.useMemo(() => getTheme(mode), [mode])
+  const fontFamily = useThemeStore((s) => s.fontFamily)
+  const fontSize = useThemeStore((s) => s.fontSize)
+  const theme = React.useMemo(() => getTheme(mode, fontFamily, fontSize), [mode, fontFamily, fontSize])
 
   return (
     <ThemeProvider theme={theme}>

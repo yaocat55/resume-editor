@@ -21,6 +21,9 @@ import {
   Collapse,
   Snackbar,
   Alert,
+  Select,
+  MenuItem,
+  FormControl,
 } from '@mui/material'
 import {
   Person as PersonIcon,
@@ -42,6 +45,7 @@ import {
   Reorder as ReorderIcon,
   Check as CheckIcon,
   AutoAwesome as AiIcon,
+  TextFields as FontIcon,
 } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import useThemeStore from '../../store/themeStore'
@@ -71,6 +75,11 @@ const EditorLayout: React.FC = () => {
   const resetResume = useResumeStore((s) => s.resetResume)
   const themeMode = useThemeStore((s) => s.mode)
   const toggleTheme = useThemeStore((s) => s.toggleMode)
+  const fontFamily = useThemeStore((s) => s.fontFamily)
+  const fontSize = useThemeStore((s) => s.fontSize)
+  const setFontFamily = useThemeStore((s) => s.setFontFamily)
+  const setFontSize = useThemeStore((s) => s.setFontSize)
+  const [fontOpen, setFontOpen] = useState(false)
   const visibleSections = useResumeStore((s) => s.visibleSections)
   const toggleSection = useResumeStore((s) => s.toggleSection)
   const sectionOrder = useResumeStore((s) => s.sectionOrder)
@@ -290,6 +299,31 @@ const EditorLayout: React.FC = () => {
               {themeMode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
+          <Tooltip title="调整字体" placement="right">
+            <IconButton size="small" onClick={() => setFontOpen(!fontOpen)} sx={{ color: fontOpen ? 'primary.main' : 'text.secondary' }}>
+              <FontIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {fontOpen && (
+            <Box sx={{ px: 0.5, py: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} sx={{ fontSize: '0.65rem', height: 28 }}>
+                  {[12, 13, 14, 15, 16, 18].map((s) => (
+                    <MenuItem key={s} value={s} sx={{ fontSize: '0.65rem' }}>{s}px</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} sx={{ fontSize: '0.58rem', height: 26 }}>
+                  <MenuItem value="'PingFang SC', 'Microsoft YaHei', sans-serif" sx={{ fontSize: '0.6rem' }}>默认</MenuItem>
+                  <MenuItem value="'Noto Serif SC', 'SimSun', serif" sx={{ fontSize: '0.6rem' }}>宋体</MenuItem>
+                  <MenuItem value="'KaiTi', 'STKaiti', serif" sx={{ fontSize: '0.6rem' }}>楷体</MenuItem>
+                  <MenuItem value="'Helvetica Neue', Arial, sans-serif" sx={{ fontSize: '0.6rem' }}>黑体</MenuItem>
+                  <MenuItem value="'Georgia', 'Times New Roman', serif" sx={{ fontSize: '0.6rem' }}>英文衬线</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
         </Box>
       </Paper>
 

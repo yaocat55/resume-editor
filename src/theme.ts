@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles'
 
-export const getTheme = (mode: 'light' | 'dark') => createTheme({
+export const getTheme = (mode: 'light' | 'dark', fontFamily: string, fontSize: number) => createTheme({
   palette: {
     mode,
     ...(mode === 'light' ? {
@@ -26,10 +26,8 @@ export const getTheme = (mode: 'light' | 'dark') => createTheme({
     }),
   },
   typography: {
-    fontFamily: [
-      '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"PingFang SC"',
-      '"Hiragino Sans GB"', '"Microsoft YaHei"', 'sans-serif',
-    ].join(','),
+    fontFamily,
+    fontSize,
     h6: { fontWeight: 600, fontSize: '1rem', letterSpacing: 0 },
     subtitle2: { fontWeight: 600, fontSize: '0.875rem', letterSpacing: 0 },
     body2: { fontSize: '0.8125rem' },
