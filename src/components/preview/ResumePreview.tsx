@@ -204,7 +204,8 @@ const ResumePreview: React.FC = () => {
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body { margin:0; padding:0; font-family:'PingFang SC','Microsoft YaHei',sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  .resume-page { width:210mm; min-height:0 !important; }
+  /* 确保第二页及之后也有顶部间距 */
+  .resume-page { width:210mm; min-height:0 !important; padding-top:40px !important; }
   .resume-section, .entry, .entry-list { page-break-inside: avoid; }
   .section-title { page-break-after: avoid; }
   ${printCSS}
