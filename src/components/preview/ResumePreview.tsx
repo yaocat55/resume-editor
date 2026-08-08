@@ -73,7 +73,7 @@ const ShadowPage = React.memo<{
     // BUT hide first-page-only sections on page 2+
     if (!single && page > 0) {
       const hideCss = document.createElement('style')
-      hideCss.textContent = `#personal,#profile,.profile-banner,header,.resume-header{display:none!important}`
+      hideCss.textContent = `#personal,#profile,.profile-banner{display:none!important}`
       r.appendChild(hideCss)
     }
     populateShadowDOM(r, data, vis, order)
