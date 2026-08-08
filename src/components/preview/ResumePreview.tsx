@@ -116,7 +116,7 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: ${fontFamily}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  @page { size: A4; margin: 8mm; }
+  @page { size: A4; margin: 0; }
   .resume-page { min-height: auto !important; overflow: visible !important; }
   .resume-section, .entry, .entry-list { page-break-inside: avoid; }
   .section-title { page-break-after: avoid; }
@@ -168,7 +168,7 @@ const ResumePreview: React.FC = () => {
     const style = document.createElement('style')
     style.id = id
     style.textContent = `
-  @page { size: A4; margin: 8mm; }
+  @page { size: A4; margin: 0; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .resume-page { min-height: auto !important; overflow: visible !important; }

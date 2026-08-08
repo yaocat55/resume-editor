@@ -76,7 +76,7 @@ app.whenReady().then(() => {
       printSelectionOnly: false,
       landscape: false,
       pageSize: 'A4',
-      margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      marginsType: 1,
     })
     win.close()
 
