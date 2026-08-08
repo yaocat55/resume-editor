@@ -168,8 +168,8 @@ export const vscodeTemplateHTML = `<!DOCTYPE html>
           <div id="fullName"></div>
           <div id="jobTitle"></div>
           <div class="contact-row">
-            <span id="gender">👤 <span class="val"></span></span>
-            <span id="age"><span class="val"></span></span>
+            <span id="gender">👤 性别：<span class="val"></span></span>
+            <span id="age">年龄：<span class="val"></span></span>
             <span id="phone"><span class="val"></span></span>
             <span id="email"><span class="val"></span></span>
             <span id="location"><span class="val"></span></span>

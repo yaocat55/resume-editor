@@ -202,8 +202,8 @@ export const socialTemplateHTML = `<!DOCTYPE html>
           </div>
           <div class="follow-btn">📩 联系我</div>
           <div class="contact-row">
-            <span id="gender">👤 <span class="val"></span></span>
-            <span id="age"><span class="val"></span></span>📍 <span class="val"></span></span>
+            <span id="gender">👤 性别：<span class="val"></span></span>
+            <span id="age">年龄：<span class="val"></span></span>📍 <span class="val"></span></span>
             <span id="email">✉️ <span class="val"></span></span>
             <span id="phone">📞 <span class="val"></span></span>
             <a id="website" href="" target="_blank">🔗 <span class="val"></span></a>

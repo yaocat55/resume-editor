@@ -241,8 +241,8 @@ export const fdeTemplateHTML = `<!DOCTYPE html>
             <span class="stat-item"><span class="stat-num" data-stat="certs">0</span><span class="stat-label">专业认证</span></span>
           </div>
           <div class="contact-row">
-            <span id="gender">👤 <span class="val"></span></span>
-            <span id="age"><span class="val"></span></span><span class="val"></span></span>
+            <span id="gender">👤 性别：<span class="val"></span></span>
+            <span id="age">年龄：<span class="val"></span></span><span class="val"></span></span>
             <span id="email"><span class="val"></span></span>
             <span id="location"><span class="val"></span></span>
             <a id="website" href="" target="_blank"><span class="val"></span></a>
