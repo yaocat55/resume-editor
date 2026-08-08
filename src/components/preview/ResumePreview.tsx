@@ -266,7 +266,6 @@ const ResumePreview: React.FC = () => {
   const getRenderedHTML = useCallback(() => {
     let html = previewRef.current?.getHTML() || template.html
     if (forceSinglePage) {
-      // Inject scale-to-fit script: measure content, scale if exceeds A4
       html = html.replace('</body>', `<script>
 window.onload=function(){
   var el=document.querySelector('.resume-page')||document.querySelector('[id="resume-root"]')||document.body.children[0];
@@ -278,6 +277,17 @@ window.onload=function(){
   setTimeout(function(){window.print()},300)
 }
 <\/script></body>`)
+    } else {
+      // Multi-page: add explicit page break handling
+      html = html.replace('</style>', `
+    @media print {
+      .resume-page { overflow: visible !important; height: auto !important; }
+      .resume-section { page-break-inside: avoid; }
+      .section-title { page-break-after: avoid; }
+      .entry { page-break-inside: avoid; }
+      .entry-list { page-break-inside: avoid; }
+    }
+  </style>`)
     }
     return html
   }, [template.html, forceSinglePage])
