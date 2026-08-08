@@ -126,14 +126,18 @@ const ResumePreview: React.FC = () => {
 
   const [pageSections, setPageSections] = useState<string[][]>([sectionOrder])
   const measureRef = useRef<HTMLDivElement>(null)
+  // Stable refs for template context
+  const cssTextRef = useRef(cssText)
+  cssTextRef.current = cssText
+  const bodyHTMLRef = useRef(bodyHTML)
+  bodyHTMLRef.current = bodyHTML
 
   useEffect(() => {
     // Render measurement content directly into hidden div's shadow DOM
     const t = setTimeout(() => {
       const host = measureRef.current
-      if (!host) { console.warn('[measure] no measureRef host'); return }
+      if (!host) return
 
-      // Ensure shadow root exists
       let shadow = (host as any).__measureRoot as ShadowRoot | null
       if (!shadow) {
         shadow = host.attachShadow({ mode: 'open' })
@@ -150,31 +154,28 @@ const ResumePreview: React.FC = () => {
       `
       shadow.appendChild(baseStyle)
 
-      if (cssText) {
+      const currentCSS = cssTextRef.current
+      if (currentCSS) {
         const tplStyle = document.createElement('style')
-        tplStyle.textContent = cssText
+        tplStyle.textContent = currentCSS
         shadow.appendChild(tplStyle)
       }
 
       const temp = document.createElement('div')
-      temp.innerHTML = bodyHTML
+      temp.innerHTML = bodyHTMLRef.current
       while (temp.firstChild) shadow.appendChild(temp.firstChild)
 
       populateShadowDOM(shadow, resume, visibleSections, sectionOrder)
 
-      // Wait for layout, then measure
       setTimeout(() => {
         const body = shadow!.querySelector('.resume-body') || shadow!.querySelector('.resume-page')
-        if (!body) { console.warn('[measure] no resume-body found'); setPageSections([sectionOrder]); return }
-        const totalH = (body as HTMLElement).scrollHeight
-        console.log('[measure] total height:', totalH, 'px, pages:', Math.ceil(totalH / PAGE_HEIGHT))
+        if (!body) { setPageSections([sectionOrder]); return }
         const pages = measurePagedSections(body, sectionOrder)
-        console.log('[measure] pages:', pages.length, pages.map(p => p.join(',')))
         setPageSections(pages.length > 0 ? pages : [sectionOrder])
       }, 300)
     }, 800)
     return () => clearTimeout(t)
-  }, [resume, visibleSections, sectionOrder, template.html, key, cssText, bodyHTML])
+  }, [resume, visibleSections, sectionOrder, template.html, key])
 
   const handleRefresh = () => setKey((k) => k + 1)
 
