@@ -85,14 +85,18 @@ const ShadowPage = React.memo<PageResult>(
  */
 function measurePagedSections(container: Element, sectionOrder: string[]): string[][] {
   const resumePage = container.querySelector('.resume-page') || container
-  const body = resumePage.querySelector('.resume-body') || resumePage
+  // Try .resume-body first, then #resume-root (Bento etc), then resumePage itself
+  const body = resumePage.querySelector('.resume-body') ||
+               resumePage.querySelector('#resume-root') ||
+               resumePage
   if (!body) return [sectionOrder]
 
-  // Collect all direct child sections of resume-body
+  // Collect children that are actual section elements
   const children = Array.from(body.children).filter(el => {
-    const id = (el as HTMLElement).getAttribute('id')
-    return (el as HTMLElement).offsetHeight > 0 &&
-           !(el as HTMLElement).classList.contains('profile-banner')
+    const el2 = el as HTMLElement
+    if (el2.offsetHeight === 0) return false
+    if (el2.classList.contains('profile-banner')) return true
+    return true
   })
 
   const pages: string[][] = [[]]
