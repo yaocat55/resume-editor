@@ -130,21 +130,50 @@ const ResumePreview: React.FC = () => {
   const measureRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Measure in hidden container
+    // Render measurement content directly into hidden div's shadow DOM
     const t = setTimeout(() => {
       const host = measureRef.current
-      if (!host || !host.shadowRoot) return
-      const shadow = host.shadowRoot!
-      // Ensure all data has been populated before measuring
-      const body = shadow.querySelector('.resume-body') || shadow.querySelector('.resume-page')
-      if (!body) return
+      if (!host) return
+
+      // Ensure shadow root exists
+      let shadow = (host as any).__measureRoot as ShadowRoot | null
+      if (!shadow) {
+        shadow = host.attachShadow({ mode: 'open' })
+        ;(host as any).__measureRoot = shadow
+      }
+      shadow.innerHTML = ''
+
+      const baseStyle = document.createElement('style')
+      baseStyle.textContent = `
+        :host { display: block; width:210mm; background:#fff; }
+        .resume-page { min-height: 0 !important; }
+        .skill-tag.secondary { opacity: 0.7; font-weight: 400 !important; }
+        .skill-group[data-type="secondary"] .group-name::after { content: "（加分项）"; font-weight: 400; opacity: 0.6; font-size: 0.75em; }
+      `
+      shadow.appendChild(baseStyle)
+
+      if (cssText) {
+        const tplStyle = document.createElement('style')
+        tplStyle.textContent = cssText
+        shadow.appendChild(tplStyle)
+      }
+
+      const temp = document.createElement('div')
+      temp.innerHTML = bodyHTML
+      while (temp.firstChild) shadow.appendChild(temp.firstChild)
+
+      populateShadowDOM(shadow, resume, visibleSections, sectionOrder)
+
+      // Wait for layout, then measure
       requestAnimationFrame(() => {
+        const body = shadow!.querySelector('.resume-body') || shadow!.querySelector('.resume-page')
+        if (!body) { setPageSections([sectionOrder]); return }
         const pages = measurePageSections(body, sectionOrder)
         setPageSections(pages.length > 0 ? pages : [sectionOrder])
       })
     }, 600)
     return () => clearTimeout(t)
-  }, [resume, visibleSections, sectionOrder, template.html, key])
+  }, [resume, visibleSections, sectionOrder, template.html, key, cssText, bodyHTML])
 
   const handleRefresh = () => setKey((k) => k + 1)
 
@@ -193,12 +222,8 @@ const ResumePreview: React.FC = () => {
       </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', p: 2 }}>
-        {/* Hidden measurement host */}
-        <Box ref={measureRef} sx={{ position: 'absolute', left: -9999, width: '210mm' }}>
-          <ShadowPage pageIndex={-2} cssText={cssText} bodyHTML={bodyHTML}
-            data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} html={template.html}
-          />
-        </Box>
+        {/* Hidden measurement host — renders complete DOM for height calculation */}
+        <Box ref={measureRef} sx={{ position: 'absolute', left: -9999, top: 0, width: '210mm', minHeight: 1, visibility: 'hidden' }} />
 
         {paginatedPreview ? (
           <Box sx={{
