@@ -114,7 +114,7 @@ const PersonalEditor: React.FC = () => {
             placeholder="张明"
             required
           />
-          <TextField
+            <TextField
             label="性别"
             select
             value={personal.gender || ''}
@@ -126,6 +126,13 @@ const PersonalEditor: React.FC = () => {
               <MenuItem key={g} value={g}>{g}</MenuItem>
             ))}
           </TextField>
+          <TextField
+            label="年龄"
+            value={personal.age || ''}
+            onChange={(e) => updatePersonal({ age: e.target.value })}
+            placeholder="26"
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
           <TextField
             label={
               <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>

@@ -65,6 +65,7 @@ export const creativeTemplateHTML = `<!DOCTYPE html>
   <div class="divider"></div>
   <div class="contact-row">
     <span id="gender">👤 <span class="val"></span></span>
+    <span id="age"><span class="val"></span></span>
     <span id="email"><span class="val"></span></span>
     <span id="location"><span class="val"></span></span>
     <a id="website" href="" target="_blank"><span class="val"></span></a>

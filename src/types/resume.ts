@@ -7,6 +7,7 @@ export interface Personal {
   avatar: string
   fullName: string
   gender: string
+  age: string
   jobTitle: string
   phone: string
   email: string
@@ -138,6 +139,7 @@ export const defaultResume: Resume = {
     avatar: '',
     fullName: '张明',
     gender: '男',
+    age: '26',
     jobTitle: '前端开发工程师',
     phone: '138-0000-8888',
     email: 'ming.zhang@email.com',

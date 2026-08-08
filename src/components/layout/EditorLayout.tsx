@@ -65,6 +65,7 @@ import TemplateManager from '../editor/TemplateManager'
 import ResumePreview from '../preview/ResumePreview'
 import ErrorBoundary from '../ErrorBoundary'
 import FullPolishDialog from '../FullPolishDialog'
+import { generateDocx } from '../../features/export/docx'
 import type { Resume } from '../../types/resume'
 
 const EditorLayout: React.FC = () => {

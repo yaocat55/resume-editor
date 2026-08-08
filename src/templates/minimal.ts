@@ -92,6 +92,7 @@ export const minimalTemplateHTML = `<!DOCTYPE html>
     <div id="jobTitle"></div>
     <div class="contact-row">
       <span id="gender">👤 <span class="val"></span></span>
+      <span id="age"><span class="val"></span></span>
       <span id="phone"><span class="val"></span></span>
       <span id="email"><span class="val"></span></span>
       <span id="location"><span class="val"></span></span>

@@ -106,6 +106,7 @@ export function populateShadowDOM(
   showOrHide('#personal', 'personal')
   if (pf.fullName) setText(root, '#fullName', pf.fullName)
   if (pf.gender) setVal('#gender', pf.gender)
+  if (pf.age) setText(root, '#age', pf.age)
   if (pf.jobTitle) setText(root, '#jobTitle', pf.jobTitle)
   setVal('#phone', pf.phone)
   setVal('#email', pf.email)

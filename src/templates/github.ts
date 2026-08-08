@@ -251,6 +251,7 @@ export const githubTemplateHTML = `<!DOCTYPE html>
       </div>
       <div class="contact-row">
         <span id="gender" style="font-size:0.9em;opacity:0.7;"><span class="val"></span></span>
+        <span id="age" style="font-size:0.9em;opacity:0.7;"><span class="val"></span></span>
         <span id="location"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M8 1C5.5 1 3.5 2.9 3.5 5.3c0 2.1 1.6 4.6 4.5 7.7 2.9-3.1 4.5-5.6 4.5-7.7C12.5 2.9 10.5 1 8 1zm0 6c-.9 0-1.5-.7-1.5-1.5S7.1 4 8 4s1.5.7 1.5 1.5S8.9 7 8 7z"/></svg> <span class="val"></span></span>
         <span id="email"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M1 3.5v9l.5.5h13l.5-.5v-9l-.5-.5h-13l-.5.5zM8 8.8L2.2 4h11.6L8 8.8zM2 12V5.2l6 4.8 6-4.8V12H2z"/></svg> <span class="val"></span></span>
         <a id="website" href="" target="_blank"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M6.5 1.5a4 4 0 0 1 4 4c0 .7-.2 1.4-.5 2l1.5 1.5a5.5 5.5 0 1 0-7.8 7.8L5.2 15a4 4 0 0 1 1.3-7.8c.7 0 1.4.2 2 .5L10 6.2a4 4 0 0 0-3.5-4.7z"/><path d="M9.5 14.5a4 4 0 0 1-4-4c0-.7.2-1.4.5-2L4.5 7a5.5 5.5 0 1 0 7.8 7.8l-1.5-1.5a4 4 0 0 1-1.3 1.2z"/></svg> <span class="val"></span></a>
