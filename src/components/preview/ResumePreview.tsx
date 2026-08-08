@@ -223,7 +223,7 @@ const ResumePreview: React.FC = () => {
 
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', p: 2 }}>
         {/* Hidden measurement host — renders complete DOM for height calculation */}
-        <Box ref={measureRef} sx={{ position: 'absolute', left: -9999, top: 0, width: '210mm', minHeight: 1, visibility: 'hidden' }} />
+        <div ref={measureRef as any} style={{ position: 'absolute', left: '-9999px', top: 0, width: '210mm' }} />
 
         {paginatedPreview ? (
           <Box sx={{
