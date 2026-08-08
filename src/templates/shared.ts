@@ -105,7 +105,7 @@ export function populateShadowDOM(
   const pf = data.personal
   showOrHide('#personal', 'personal')
   if (pf.fullName) setText(root, '#fullName', pf.fullName)
-  if (pf.gender) setVal('#gender', pf.gender)
+  if (pf.gender) setText(root, '#gender', pf.gender)
   if (pf.jobTitle) setText(root, '#jobTitle', pf.jobTitle)
   setVal('#phone', pf.phone)
   setVal('#email', pf.email)
