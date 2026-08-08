@@ -70,6 +70,12 @@ const ShadowPage = React.memo<{
     if (!single && page > 0) injectContHeader(r, page, tid, data.personal.fullName || '简历')
 
     // Always show all sections — paging is handled by viewport offset
+    // BUT hide first-page-only sections on page 2+
+    if (!single && page > 0) {
+      const hideCss = document.createElement('style')
+      hideCss.textContent = `#personal,#profile,.profile-banner,header,.resume-header{display:none!important}`
+      r.appendChild(hideCss)
+    }
     populateShadowDOM(r, data, vis, order)
   }, [cssText,bodyHTML,data,vis,order,page,single,tid])
   return <div ref={hostRef} style={single?{width:'210mm'}:{width:'210mm',height:'297mm',flexShrink:0}}/>
