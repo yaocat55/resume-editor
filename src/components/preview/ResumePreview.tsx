@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import { Box, IconButton, Tooltip, Typography, Slider, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import { Refresh as RefreshIcon, FileDownload as DownloadIcon, PictureAsPdf as PdfIcon, ContentCopy as CopyIcon, CropSquare as FitIcon } from '@mui/icons-material'
+import { Refresh as RefreshIcon, FileDownload as DownloadIcon, PictureAsPdf as PdfIcon, ContentCopy as CopyIcon, CropSquare as FitIcon, ViewDayOutlined as PagePreviewIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import useTemplateStore from '../../store/templateStore'
 import { defaultTemplate, populateShadowDOM } from '../../templates'
@@ -69,6 +69,7 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
         :host { display: block; }
         .skill-tag.secondary { opacity: 0.7; font-weight: 400 !important; }
         .skill-group[data-type="secondary"] .group-name::after { content: "（加分项）"; font-weight: 400; opacity: 0.6; font-size: 0.75em; }
+        .page-break-marker { display: none; }
       `
       root.appendChild(baseStyle)
 
@@ -146,6 +147,7 @@ const ResumePreview: React.FC = () => {
   const [key, setKey] = useState(0)
   const [zoom, setZoom] = useState(0.65)
   const [forceSinglePage, setForceSinglePage] = useState(false)
+  const [paginatedPreview, setPaginatedPreview] = useState(true)
   const template = currentTemplate || defaultTemplate
   const previewRef = useRef<{ getHTML: () => string; refreshData: () => void }>(null)
 
@@ -294,6 +296,11 @@ window.onload=function(){
               <FitIcon fontSize="small" color={forceSinglePage ? 'primary' : 'disabled'} />
             </ToggleButton>
           </Tooltip>
+          <Tooltip title={paginatedPreview ? '隐藏分页线' : '显示分页线（预览 PDF 跨页位置）'}>
+            <ToggleButton value="page" selected={paginatedPreview} onChange={() => setPaginatedPreview(!paginatedPreview)} size="small" sx={{ border: 0, p: 0.5 }}>
+              <PagePreviewIcon fontSize="small" color={paginatedPreview ? 'primary' : 'disabled'} />
+            </ToggleButton>
+          </Tooltip>
           <Tooltip title="刷新"><IconButton size="small" onClick={handleRefresh}><RefreshIcon fontSize="small" /></IconButton></Tooltip>
           <Tooltip title="复制渲染后 HTML"><IconButton size="small" onClick={handleCopyHTML}><CopyIcon fontSize="small" /></IconButton></Tooltip>
           <Tooltip title="导出渲染 HTML 文件"><IconButton size="small" onClick={handleExportHTML}><DownloadIcon fontSize="small" /></IconButton></Tooltip>
@@ -302,6 +309,15 @@ window.onload=function(){
       </Box>
       <Box id="resume-print-root" sx={{ flex: 1, overflow: 'auto', bgcolor: 'background.default', display: 'flex', justifyContent: 'center', p: 2 }}>
         <Box sx={{
+          width: '210mm',
+          minHeight: '297mm',
+          ...(paginatedPreview
+            ? {
+                backgroundImage: 'linear-gradient(to bottom, transparent 0px, transparent 1122px, #ef4444 1122px, #ef4444 1124px, transparent 1124px, transparent 0)',
+                backgroundSize: '100% 1123px',
+                backgroundRepeat: 'repeat-y',
+              }
+            : {}),
           transform: 'scale(' + zoom + ')',
           transformOrigin: 'top center',
           flexShrink: 0,
