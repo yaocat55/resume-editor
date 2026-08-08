@@ -78,23 +78,31 @@ function measurePageSections(container: Element, sectionOrder: string[]): string
   const body = resumePage.querySelector('.resume-body') || resumePage
   if (!body) return [sectionOrder]
 
-  const children = Array.from(body.children).filter(el =>
-    (el as HTMLElement).offsetHeight > 0 && !(el as HTMLElement).classList.contains('profile-banner')
-  )
+  const children = Array.from(body.children).filter(el => {
+    const id = el.getAttribute('id')
+    // Skip non-section elements like page-line markers, profile-banner
+    return (el as HTMLElement).offsetHeight > 0 &&
+           !(el as HTMLElement).classList.contains('profile-banner') &&
+           !el.getAttribute('class')?.includes('page-line')
+  })
 
   const pages: string[][] = [[]]
   let used = 0
 
   for (const child of children) {
     const el = child as HTMLElement
+    // Use data-section attribute if present, otherwise use id
+    const section = el.getAttribute('data-section') || el.getAttribute('id') || ''
+
+    // Get actual height including margins
+    const style = getComputedStyle(el)
     const h = el.offsetHeight +
-      parseFloat(getComputedStyle(el).marginTop || '0') +
-      parseFloat(getComputedStyle(el).marginBottom || '0')
+      parseFloat(style.marginTop || '0') +
+      parseFloat(style.marginBottom || '0')
 
-    // Headers: use id or data-section
-    const section = el.getAttribute('id') || el.getAttribute('data-section') || ''
-
-    if (used + h > PAGE_HEIGHT && used > 0 && h < PAGE_HEIGHT * 0.6) {
+    // If this section would overflow AND there's already content on this page
+    // AND the section isn't too tall → start new page
+    if (used + h > PAGE_HEIGHT && used > 0 && h < PAGE_HEIGHT * 0.7) {
       pages.push([])
       used = 0
     }
@@ -126,11 +134,15 @@ const ResumePreview: React.FC = () => {
     const t = setTimeout(() => {
       const host = measureRef.current
       if (!host || !host.shadowRoot) return
-      const body = host.shadowRoot.querySelector('.resume-body') || host.shadowRoot.querySelector('.resume-page')
+      const shadow = host.shadowRoot!
+      // Ensure all data has been populated before measuring
+      const body = shadow.querySelector('.resume-body') || shadow.querySelector('.resume-page')
       if (!body) return
-      const pages = measurePageSections(body, sectionOrder)
-      setPageSections(pages.length > 0 ? pages : [sectionOrder])
-    }, 500)
+      requestAnimationFrame(() => {
+        const pages = measurePageSections(body, sectionOrder)
+        setPageSections(pages.length > 0 ? pages : [sectionOrder])
+      })
+    }, 600)
     return () => clearTimeout(t)
   }, [resume, visibleSections, sectionOrder, template.html, key])
 
@@ -182,7 +194,11 @@ const ResumePreview: React.FC = () => {
 
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', p: 2 }}>
         {/* Hidden measurement host */}
-        <div ref={measureRef as any} style={{ position: 'absolute', left: -9999, width: '210mm' }} />
+        <Box ref={measureRef} sx={{ position: 'absolute', left: -9999, width: '210mm' }}>
+          <ShadowPage pageIndex={-2} cssText={cssText} bodyHTML={bodyHTML}
+            data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} html={template.html}
+          />
+        </Box>
 
         {paginatedPreview ? (
           <Box sx={{
