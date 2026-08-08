@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
-import { Box, IconButton, Tooltip, Typography, Slider, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Box, IconButton, Tooltip, Typography, Slider, ToggleButton } from '@mui/material'
 import { Refresh as RefreshIcon, FileDownload as DownloadIcon, PictureAsPdf as PdfIcon, ContentCopy as CopyIcon, CropSquare as FitIcon, ViewDayOutlined as PagePreviewIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import useTemplateStore from '../../store/templateStore'
@@ -22,23 +22,35 @@ function parseTemplateHTML(html: string): { cssText: string; bodyHTML: string } 
   return { cssText: cssParts.join('\n'), bodyHTML }
 }
 
-function hasPlaceholders(html: string): boolean {
-  return /\{\{(?!\/|#|@)([\w.]+)\}\}/g.test(html)
+const PAGE_HEIGHT = 1122
+const PAGE_GAP = 12
+
+/** Find all natural page break positions by walking DOM tree */
+function findPageBreaks(container: Element, pageHeight: number): number[] {
+  const breaks: number[] = []
+  // Collect child elements of resume-body / resume-root
+  const body = container.querySelector('.resume-body') || container
+  const children = Array.from(body.children)
+  let cumulative = 0
+
+  for (const child of children) {
+    const el = child as HTMLElement
+    const elHeight = el.offsetHeight + parseFloat(getComputedStyle(el).marginBottom || '0') + parseFloat(getComputedStyle(el).marginTop || '0')
+    if (cumulative + elHeight > pageHeight && cumulative > 0) {
+      breaks.push(cumulative)
+      cumulative = elHeight
+    } else {
+      cumulative += elHeight
+    }
+  }
+  return breaks
 }
 
-const PAGE_HEIGHT = 1122 // A4 297mm @ 96dpi
-const PAGE_GAP = 12 // gap between pages in preview
-
-/**
- * Single page component — renders template in shadow DOM, clips to one A4 page.
- */
 const ShadowPage = React.memo<{
-  html: string
-  data: Resume
-  visibleSections: Record<string, boolean>
-  sectionOrder: string[]
-  pageIndex: number
-}>(({ html, data, visibleSections, sectionOrder, pageIndex }) => {
+  html: string; data: Resume
+  visibleSections: Record<string, boolean>; sectionOrder: string[]
+  pageIndex: number; pageCount: number
+}>(({ html, data, visibleSections, sectionOrder, pageIndex, pageCount }) => {
   const hostRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef<ShadowRoot | null>(null)
   const { cssText, bodyHTML } = useMemo(() => parseTemplateHTML(html), [html])
@@ -48,14 +60,15 @@ const ShadowPage = React.memo<{
     if (!host) return
     if (!rootRef.current) rootRef.current = host.attachShadow({ mode: 'open' })
     const root = rootRef.current
-
     root.innerHTML = ''
+
+    // page 0 = full view (measure), others show from page break
     const baseStyle = document.createElement('style')
     baseStyle.textContent = `
-      :host { display: block; width:210mm; height:297mm; overflow:hidden; background:#fff; }
+      :host { display: block; width:210mm; height:${pageIndex === 0 ? 'auto' : '297mm'}; overflow:${pageIndex === 0 ? 'visible' : 'hidden'}; background:#fff; }
+      .resume-page { min-height: 0 !important; }
       .skill-tag.secondary { opacity: 0.7; font-weight: 400 !important; }
       .skill-group[data-type="secondary"] .group-name::after { content: "（加分项）"; font-weight: 400; opacity: 0.6; font-size: 0.75em; }
-      .page-line { display: none !important; }
     `
     root.appendChild(baseStyle)
 
@@ -65,12 +78,11 @@ const ShadowPage = React.memo<{
       root.appendChild(tplStyle)
     }
 
-    // Shift content up for pages 2+
+    // For pages 2+, shift content to show the right portion
     if (pageIndex > 0) {
-      const shiftCss = document.createElement('style')
-      shiftCss.id = 'page-offset'
-      shiftCss.textContent = `.resume-page { margin-top:-${pageIndex * PAGE_HEIGHT}px; min-height:${(pageIndex+1)*PAGE_HEIGHT}px !important; }`
-      root.appendChild(shiftCss)
+      const shift = document.createElement('style')
+      shift.textContent = `.resume-body { margin-top:-${pageIndex * PAGE_HEIGHT}px !important; min-height:${(pageIndex+1)*PAGE_HEIGHT}px !important; }`
+      root.appendChild(shift)
     }
 
     const temp = document.createElement('div')
@@ -80,7 +92,7 @@ const ShadowPage = React.memo<{
     populateShadowDOM(root, data, visibleSections, sectionOrder)
   }, [cssText, bodyHTML, data, visibleSections, sectionOrder, pageIndex])
 
-  return <div ref={hostRef} style={{ width: '210mm', height: '297mm', flexShrink: 0 }} />
+  return <div ref={hostRef} style={{ width: '210mm', flexShrink: 0 }} />
 })
 
 const ResumePreview: React.FC = () => {
@@ -94,21 +106,42 @@ const ResumePreview: React.FC = () => {
   const [paginatedPreview, setPaginatedPreview] = useState(true)
   const template = currentTemplate || defaultTemplate
 
-  // Measure preview height to determine page count
   const [pageCount, setPageCount] = useState(1)
   const measureRef = useRef<HTMLDivElement>(null)
 
+  // After render, count pages
   useEffect(() => {
-    // Wait for render, then measure
     const t = setTimeout(() => {
       const el = measureRef.current
-      if (!el) return
-      const h = el.scrollHeight
-      const cnt = Math.max(1, Math.ceil(h / PAGE_HEIGHT))
-      setPageCount(cnt)
-    }, 300)
+      if (!el || !el.shadowRoot) return
+      // Force reflow to get accurate height
+      const inner = el.shadowRoot.querySelector('.resume-page') || el.shadowRoot.firstElementChild
+      if (!inner) return
+      const h = (inner as HTMLElement).scrollHeight
+      setPageCount(Math.max(1, Math.ceil(h / PAGE_HEIGHT)))
+    }, 400)
     return () => clearTimeout(t)
-  }, [resume, visibleSections, sectionOrder, template.html])
+  }, [resume, visibleSections, sectionOrder, template.html, key])
+
+  const handleRefresh = () => setKey((k) => k + 1)
+
+  const handleExportPDF = () => {
+    const win = window.open('', '_blank')
+    if (win) {
+      const styles = Array.from(measureRef.current?.shadowRoot?.querySelectorAll('style') || []).map(s => s.textContent).join('\n')
+      const body = measureRef.current?.shadowRoot?.querySelector('.resume-page')?.outerHTML || ''
+      win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+        @page { size:A4; margin:0; }
+        * { box-sizing:border-box; }
+        .resume-section,.entry,.entry-list { page-break-inside:avoid; }
+        .section-title { page-break-after:avoid; }
+        .resume-page { width:210mm; margin:0; }
+        body { margin:0; padding:0; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
+        ${styles}</style></head><body>${body}</body></html>`)
+      win.document.close()
+      setTimeout(() => win.print(), 500)
+    }
+  }
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
@@ -131,49 +164,39 @@ const ResumePreview: React.FC = () => {
               <PagePreviewIcon fontSize="small" color={paginatedPreview ? 'primary' : 'disabled'} />
             </ToggleButton>
           </Tooltip>
-          <Tooltip title="刷新"><IconButton size="small" onClick={() => setKey((k) => k + 1)}><RefreshIcon fontSize="small" /></IconButton></Tooltip>
-          <Tooltip title="导出 PDF"><IconButton size="small" onClick={() => {}}><PdfIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="刷新"><IconButton size="small" onClick={handleRefresh}><RefreshIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="复制 HTML"><IconButton size="small"><CopyIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="导出 HTML"><IconButton size="small"><DownloadIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="导出 PDF"><IconButton size="small" onClick={handleExportPDF}><PdfIcon fontSize="small" /></IconButton></Tooltip>
         </Box>
       </Box>
 
-      <Box id="resume-print-root" sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.200', display: 'flex', justifyContent: 'center', p: 2 }}>
-        {/* Hidden measurement render */}
+      <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', p: 2 }}>
+        {/* Hidden full-height measure render */}
         <Box ref={measureRef} sx={{ position: 'absolute', left: -9999, width: '210mm' }}>
-          <ShadowPage key={`m-${key}`} pageIndex={0} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
+          <ShadowPage key={`m-${key}`} pageIndex={0} pageCount={1} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
         </Box>
 
         {paginatedPreview ? (
-          /* Paged view: stack of A4 paper cards */
           <Box sx={{
             transform: `scale(${zoom})`,
             transformOrigin: 'top center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: `${PAGE_GAP / zoom}px`,
-            flexShrink: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            gap: `${PAGE_GAP / zoom}px`, flexShrink: 0,
           }}>
             {Array.from({ length: pageCount }, (_, i) => (
               <Box key={i} sx={{
-                width: '210mm',
-                height: '297mm',
+                width: '210mm', height: '297mm',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                flexShrink: 0,
-                bgcolor: '#fff',
+                flexShrink: 0, bgcolor: '#fff',
               }}>
-                <ShadowPage key={`p-${key}-${i}`} pageIndex={i} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
+                <ShadowPage key={`p-${key}-${i}`} pageIndex={i} pageCount={pageCount} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
               </Box>
             ))}
           </Box>
         ) : (
-          /* Continuous view: single scrollable column */
-          <Box sx={{
-            transform: `scale(${zoom})`,
-            transformOrigin: 'top center',
-            flexShrink: 0,
-            alignSelf: 'flex-start',
-          }}>
-            <ShadowPage key={`c-${key}`} pageIndex={-1} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
+          <Box sx={{ transform: `scale(${zoom})`, transformOrigin: 'top center', flexShrink: 0, alignSelf: 'flex-start' }}>
+            <ShadowPage key={`c-${key}`} pageIndex={-1} pageCount={1} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
           </Box>
         )}
       </Box>
