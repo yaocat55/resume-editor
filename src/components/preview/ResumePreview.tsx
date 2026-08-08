@@ -71,19 +71,18 @@ const ShadowPage = React.memo<PageResult>(
 
 /**
  * Scan rendered DOM to determine which sections belong on which page.
- * Returns array of section-id arrays: [[sections for page 1], [sections for page 2], ...]
+ * Uses a fixed page height of 1122px (A4 at 96dpi).
  */
-function measurePageSections(container: Element, sectionOrder: string[]): string[][] {
+function measurePagedSections(container: Element, sectionOrder: string[]): string[][] {
   const resumePage = container.querySelector('.resume-page') || container
   const body = resumePage.querySelector('.resume-body') || resumePage
   if (!body) return [sectionOrder]
 
+  // Collect all direct child sections of resume-body
   const children = Array.from(body.children).filter(el => {
-    const id = el.getAttribute('id')
-    // Skip non-section elements like page-line markers, profile-banner
+    const id = (el as HTMLElement).getAttribute('id')
     return (el as HTMLElement).offsetHeight > 0 &&
-           !(el as HTMLElement).classList.contains('profile-banner') &&
-           !el.getAttribute('class')?.includes('page-line')
+           !(el as HTMLElement).classList.contains('profile-banner')
   })
 
   const pages: string[][] = [[]]
@@ -91,18 +90,17 @@ function measurePageSections(container: Element, sectionOrder: string[]): string
 
   for (const child of children) {
     const el = child as HTMLElement
-    // Use data-section attribute if present, otherwise use id
     const section = el.getAttribute('data-section') || el.getAttribute('id') || ''
-
-    // Get actual height including margins
     const style = getComputedStyle(el)
     const h = el.offsetHeight +
       parseFloat(style.marginTop || '0') +
       parseFloat(style.marginBottom || '0')
 
-    // If this section would overflow AND there's already content on this page
-    // AND the section isn't too tall → start new page
-    if (used + h > PAGE_HEIGHT && used > 0 && h < PAGE_HEIGHT * 0.7) {
+    console.log('[measure] section:', section, 'height:', el.offsetHeight, 'used:', used, 'h:', h)
+
+    // If this section overflows the page and there is already content → start new page
+    if (used > 10 && used + h > PAGE_HEIGHT) {
+      console.log('[measure] page break at', section)
       pages.push([])
       used = 0
     }
@@ -170,7 +168,7 @@ const ResumePreview: React.FC = () => {
         if (!body) { console.warn('[measure] no resume-body found'); setPageSections([sectionOrder]); return }
         const totalH = (body as HTMLElement).scrollHeight
         console.log('[measure] total height:', totalH, 'px, pages:', Math.ceil(totalH / PAGE_HEIGHT))
-        const pages = measurePageSections(body, sectionOrder)
+        const pages = measurePagedSections(body, sectionOrder)
         console.log('[measure] pages:', pages.length, pages.map(p => p.join(',')))
         setPageSections(pages.length > 0 ? pages : [sectionOrder])
       }, 300)
