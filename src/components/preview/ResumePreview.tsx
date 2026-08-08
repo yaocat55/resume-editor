@@ -69,7 +69,31 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
         :host { display: block; }
         .skill-tag.secondary { opacity: 0.7; font-weight: 400 !important; }
         .skill-group[data-type="secondary"] .group-name::after { content: "（加分项）"; font-weight: 400; opacity: 0.6; font-size: 0.75em; }
-        .page-break-marker { display: none; }
+        .page-break-guide {
+          display: none;
+          position: relative;
+          height: 0;
+          border: none;
+          margin: 0;
+          padding: 0;
+        }
+        .page-break-guide::before {
+          content: "";
+          display: block;
+          border-top: 2px dashed #ef4444;
+          opacity: 0.5;
+          margin: 0 0 0 0;
+        }
+        .page-break-guide::after {
+          content: "A4 分页";
+          display: block;
+          text-align: right;
+          font-size: 10px;
+          color: #ef4444;
+          opacity: 0.6;
+          margin-top: 2px;
+          margin-bottom: 0;
+        }
       `
       root.appendChild(baseStyle)
 
@@ -85,8 +109,45 @@ const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () 
         root.appendChild(temp.firstChild)
       }
 
-      // Initial data population
+      // Data + page breaks
       populateShadowDOM(root, data, visibleSections, sectionOrder)
+
+      // Only line separators when pagination is enabled
+      if (showPageBreaks) {
+        const pageHeightPx = 1122 // A4 height at 96dpi
+        const totalHeight = resumePage.scrollHeight
+
+        if (totalHeight > pageHeightPx) {
+          const pageCount = Math.ceil(totalHeight / pageHeightPx)
+          for (let i = 1; i < pageCount; i++) {
+            const line = document.createElement('div')
+            line.className = 'page-line'
+            line.style.cssText = `
+              position: absolute;
+              top: ${i * pageHeightPx}px;
+              left: 0;
+              right: 0;
+              height: 0;
+              border-top: 2px dashed #ef4444;
+              z-index: 10;
+              pointer-events: none;
+            `
+            const label = document.createElement('span')
+            label.textContent = `— 第 ${i + 1} 页 —`
+            label.style.cssText = `
+              position: absolute;
+              right: 4px;
+              top: -14px;
+              font-size: 10px;
+              color: #ef4444;
+              background: inherit;
+              padding: 0 4px;
+            `
+            line.appendChild(label)
+            resumePage.appendChild(line)
+          }
+        }
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cssText, bodyHTML])
 
