@@ -133,7 +133,7 @@ const ResumePreview: React.FC = () => {
     // Render measurement content directly into hidden div's shadow DOM
     const t = setTimeout(() => {
       const host = measureRef.current
-      if (!host) return
+      if (!host) { console.warn('[measure] no measureRef host'); return }
 
       // Ensure shadow root exists
       let shadow = (host as any).__measureRoot as ShadowRoot | null
@@ -165,13 +165,16 @@ const ResumePreview: React.FC = () => {
       populateShadowDOM(shadow, resume, visibleSections, sectionOrder)
 
       // Wait for layout, then measure
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         const body = shadow!.querySelector('.resume-body') || shadow!.querySelector('.resume-page')
-        if (!body) { setPageSections([sectionOrder]); return }
+        if (!body) { console.warn('[measure] no resume-body found'); setPageSections([sectionOrder]); return }
+        const totalH = (body as HTMLElement).scrollHeight
+        console.log('[measure] total height:', totalH, 'px, pages:', Math.ceil(totalH / PAGE_HEIGHT))
         const pages = measurePageSections(body, sectionOrder)
+        console.log('[measure] pages:', pages.length, pages.map(p => p.join(',')))
         setPageSections(pages.length > 0 ? pages : [sectionOrder])
-      })
-    }, 600)
+      }, 300)
+    }, 800)
     return () => clearTimeout(t)
   }, [resume, visibleSections, sectionOrder, template.html, key, cssText, bodyHTML])
 
