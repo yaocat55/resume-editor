@@ -48,8 +48,8 @@ function hasPlaceholders(html: string): boolean {
  * 1. Inject raw HTML + CSS from the template
  * 2. Populate data via ID-mapped DOM manipulation (populateShadowDOM)
  */
-const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () => void }, { html: string; data: Resume; visibleSections: Record<string, boolean>; sectionOrder: string[] }>(
-  ({ html, data, visibleSections, sectionOrder }, ref) => {
+const ShadowPreview = React.forwardRef<{ getHTML: () => string; refreshData: () => void }, { html: string; data: Resume; visibleSections: Record<string, boolean>; sectionOrder: string[]; showPageBreaks: boolean }>(
+  ({ html, data, visibleSections, sectionOrder, showPageBreaks }, ref) => {
     const hostRef = useRef<HTMLDivElement>(null)
     const rootRef = useRef<ShadowRoot | null>(null)
     const { cssText, bodyHTML } = useMemo(() => parseTemplateHTML(html), [html])
