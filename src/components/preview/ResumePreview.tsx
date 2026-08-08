@@ -384,7 +384,7 @@ window.onload=function(){
           flexShrink: 0,
           alignSelf: 'flex-start',
         }}>
-          <ShadowPreview key={key} ref={previewRef} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} />
+          <ShadowPreview key={key} ref={previewRef} html={template.html} data={resume} visibleSections={visibleSections} sectionOrder={sectionOrder} showPageBreaks={paginatedPreview} />
         </Box>
       </Box>
     </Box>
