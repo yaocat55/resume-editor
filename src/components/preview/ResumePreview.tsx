@@ -179,15 +179,27 @@ const ResumePreview: React.FC = () => {
 
   const handleRefresh = () => setKey((k) => k + 1)
 
-  // --- PDF Export: collect styles + body from live content ---
+  // --- PDF Export: render template with real data, then extract populated HTML ---
   const handleExportPDF = useCallback(() => {
-    // Build a clean standalone HTML with print‑friendly CSS
-    const styleEl = document.getElementById('resume-print-styles')
-    const printCSS = styleEl ? styleEl.textContent : ''
-    const allStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n')
+    // 1. Create a hidden div and populate it with resume data
+    const container = document.createElement('div')
+    container.innerHTML = bodyHTML
+    container.style.position = 'absolute'
+    container.style.left = '-9999px'
+    container.style.top = '0'
+    container.style.width = '210mm'
+    document.body.appendChild(container)
 
-    const printableHTML = `
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+    // 2. Populate with real data
+    populateShadowDOM(container, resume, visibleSections, sectionOrder)
+
+    // 3. Extract populated HTML
+    const populatedBody = container.innerHTML
+    document.body.removeChild(container)
+
+    // 4. Build standalone HTML for printing
+    const printCSS = document.getElementById('resume-print-styles')?.textContent || ''
+    const printableHTML = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
@@ -197,7 +209,7 @@ const ResumePreview: React.FC = () => {
   .section-title { page-break-after: avoid; }
   ${printCSS}
   ${cssText}
-</style></head><body>${bodyHTML}</body></html>`
+</style></head><body>${populatedBody}</body></html>`
 
     const win = window.open('about:blank', '_blank', 'width=800,height=600')
     if (win) {
@@ -205,7 +217,7 @@ const ResumePreview: React.FC = () => {
       win.document.close()
       setTimeout(() => { try { win.print() } catch {} }, 600)
     }
-  }, [cssText, bodyHTML])
+  }, [cssText, bodyHTML, resume, visibleSections, sectionOrder])
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
