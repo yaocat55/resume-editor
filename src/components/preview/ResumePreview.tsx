@@ -53,6 +53,16 @@ const ShadowPage = React.memo<PageResult>(
         .resume-page { min-height: 0 !important; }
         .skill-tag.secondary { opacity: 0.7; font-weight: 400 !important; }
         .skill-group[data-type="secondary"] .group-name::after { content: "（加分项）"; font-weight: 400; opacity: 0.6; font-size: 0.75em; }
+        /* ── 多页适配（全局，10 个模板生效）── */
+        .resume-section { margin-bottom: 24px !important; }
+        .resume-section:last-child { margin-bottom: 0 !important; }
+        @media print {
+          .resume-page { overflow: visible !important; height: auto !important; }
+          .resume-section { page-break-inside: avoid; }
+          .entry { page-break-inside: avoid; }
+          .entry-list { page-break-inside: avoid; }
+          .section-title { page-break-after: avoid; }
+        }
       `
       root.appendChild(baseStyle)
 
@@ -204,8 +214,10 @@ const ResumePreview: React.FC = () => {
   @page { size: A4; margin: 8mm 0 0 0; }
   * { box-sizing: border-box; }
   body { margin:0; padding:0; font-family:'PingFang SC','Microsoft YaHei',sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  .resume-page { width:210mm; min-height:0 !important; }
-  .resume-section, .entry, .entry-list { page-break-inside: avoid; }
+  .resume-page { width:210mm; min-height:0 !important; overflow:visible !important; height:auto !important; }
+  .resume-section { margin-bottom: 24px !important; page-break-inside: avoid; }
+  .resume-section:last-child { margin-bottom: 0 !important; }
+  .entry, .entry-list { page-break-inside: avoid; }
   .section-title { page-break-after: avoid; }
   ${printCSS}
   ${cssText}
