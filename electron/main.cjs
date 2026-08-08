@@ -67,16 +67,16 @@ app.whenReady().then(() => {
   // IPC: Export PDF from rendered HTML
   ipcMain.handle('export-pdf', async (event, html) => {
     const win = new BrowserWindow({
-      width: 800, height: 600, show: false,
+      width: 794,
+      height: 1123,
+      show: false,
       webPreferences: { contextIsolation: true, nodeIntegration: false },
     })
     await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
     const pdf = await win.webContents.printToPDF({
       printBackground: true,
-      printSelectionOnly: false,
       landscape: false,
-      pageSize: 'A4',
-      marginsType: 1,
+      margins: { top: 0, bottom: 0, left: 0, right: 0 },
     })
     win.close()
 
