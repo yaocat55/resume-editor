@@ -179,23 +179,33 @@ const ResumePreview: React.FC = () => {
 
   const handleRefresh = () => setKey((k) => k + 1)
 
-  const handleExportPDF = () => {
-    const win = window.open('', '_blank')
+  // --- PDF Export: collect styles + body from live content ---
+  const handleExportPDF = useCallback(() => {
+    // Build a clean standalone HTML with print‑friendly CSS
+    const styleEl = document.getElementById('resume-print-styles')
+    const printCSS = styleEl ? styleEl.textContent : ''
+    const allStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n')
+
+    const printableHTML = `
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; font-family:'PingFang SC','Microsoft YaHei',sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .resume-page { width:210mm; min-height:0 !important; }
+  .resume-section, .entry, .entry-list { page-break-inside: avoid; }
+  .section-title { page-break-after: avoid; }
+  ${printCSS}
+  ${cssText}
+</style></head><body>${bodyHTML}</body></html>`
+
+    const win = window.open('about:blank', '_blank', 'width=800,height=600')
     if (win) {
-      const styles = Array.from(measureRef.current?.shadowRoot?.querySelectorAll('style') || []).map(s => s.textContent).join('\n')
-      const body = measureRef.current?.shadowRoot?.querySelector('.resume-page')?.outerHTML || ''
-      win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-        @page { size:A4; margin:0; }
-        * { box-sizing:border-box; }
-        .resume-section,.entry,.entry-list { page-break-inside:avoid; }
-        .section-title { page-break-after:avoid; }
-        .resume-page { width:210mm; margin:0; }
-        body { margin:0; padding:0; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
-        ${styles}</style></head><body>${body}</body></html>`)
+      win.document.write(printableHTML)
       win.document.close()
-      setTimeout(() => win.print(), 500)
+      setTimeout(() => { try { win.print() } catch {} }, 600)
     }
-  }
+  }, [cssText, bodyHTML])
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
