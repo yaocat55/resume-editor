@@ -89,6 +89,7 @@ export const minimalTemplateHTML = `<!DOCTYPE html>
   <div class="resume-body">
     <div id="personal">
     <div id="fullName"></div>
+    <span id="gender" style="font-size:0.85em;opacity:0.7;margin-left:4px;"></span>
     <div id="jobTitle"></div>
     <div class="contact-row">
       <span id="phone"><span class="val"></span></span>

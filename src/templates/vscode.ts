@@ -166,6 +166,7 @@ export const vscodeTemplateHTML = `<!DOCTYPE html>
       <div id="personal">
         <div class="personal-info">
           <div id="fullName"></div>
+          <span id="gender" style="margin-left:8px;font-size:0.9em;opacity:0.7;"></span>
           <div id="jobTitle"></div>
           <div class="contact-row">
             <span id="phone"><span class="val"></span></span>

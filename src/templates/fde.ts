@@ -234,6 +234,7 @@ export const fdeTemplateHTML = `<!DOCTYPE html>
         <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2750%27 fill=%27%23e2e8f0%27/%3E%3Ccircle cx=%2750%27 cy=%2736%27 r=%2718%27 fill=%27%2394a3b8%27/%3E%3Cellipse cx=%2750%27 cy=%2772%27 rx=%2728%27 ry=%2722%27 fill=%27%2394a3b8%27/%3E%3C/svg%3E" alt="" />
         <div class="personal-info">
           <div id="fullName"></div>
+          <span id="gender" style="font-size:0.85em;opacity:0.7;margin-left:6px;"></span>
           <div id="jobTitle"></div>
           <div class="stats-row">
             <span class="stat-item"><span class="stat-num" data-stat="exp">0</span><span class="stat-label">实施项目</span></span>
