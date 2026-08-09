@@ -21,19 +21,20 @@ const THEME: Record<string, DocxTheme> = {
   '__fde__': { primary: '166534', accent: '86EFAC', bg: 'F0FDF4', font: 'PingFang SC', fontSize: 21 },
 }
 
-function r(text: string, opts: { bold?: boolean; color?: string; size?: number; font?: string; italics?: boolean } = {}) {
-  return new TextRun({ text, bold: opts.bold, color: opts.color, size: opts.size || 21, font: opts.font, italics: opts.italics })
+function makeRun(text: string, opts: { bold?: boolean; color?: string; size?: number; font?: string; italics?: boolean } = {}) {
+  const color = opts.color ? (opts.color.startsWith('#') ? opts.color : `#${opts.color}`) : undefined
+  return new TextRun({ text, bold: opts.bold, color, size: opts.size || 21, font: opts.font, italics: opts.italics })
 }
 
 function sectionTitle(text: string, theme: DocxTheme) {
   return new Paragraph({
-    children: [r(text, { bold: true, size: theme.fontSize + 2, color: theme.primary, font: theme.font })],
+    children: [makeRun(text, { bold: true, size: theme.fontSize + 2, color: theme.primary, font: theme.font })],
     spacing: { after: 160, before: 80 },
     border: { bottom: { color: theme.accent, space: 6, size: 6 } },
   })
 }
 
-function separator(theme: DocxTheme) {
+function styleSeparator(theme: DocxTheme) {
   return new Paragraph({ border: { bottom: { color: theme.accent, space: 4, size: 4 } }, spacing: { after: 120, before: 120 }, children: [] })
 }
 
@@ -44,12 +45,12 @@ export async function generateDocx(resume: Resume, templateId: string) {
 
   /* ── Header ── */
   children.push(
-    new Paragraph({ children: [r(resume.personal.fullName || '', { bold: true, size: 48, color: t.primary, font: t.font })], spacing: { after: 80 } }),
+    new Paragraph({ children: [makeRun(resume.personal.fullName || '', { bold: true, size: 48, color: theme.primary, font: theme.font })], spacing: { after: 80 } }),
     new Paragraph({
       children: [
-        r(resume.personal.jobTitle || '', { size: sz + 4, color: '666666', font: t.font }),
-        resume.personal.gender ? r(`  ${resume.personal.gender}`, { size: sz, color: '999999', font: t.font }) : r('', {}),
-        resume.personal.age ? r(`  年龄：${resume.personal.age}`, { size: sz, color: '999999', font: t.font }) : r('', {}),
+        makeRun(resume.personal.jobTitle || '', { size: theme.fontSize + 4, color: '666666', font: theme.font }),
+        resume.personal.gender ? makeRun(`  ${resume.personal.gender}`, { size: theme.fontSize, color: '999999', font: theme.font }) : makeRun('', {}),
+        resume.personal.age ? makeRun(`  年龄：${resume.personal.age}`, { size: theme.fontSize, color: '999999', font: theme.font }) : makeRun('', {}),
       ].filter(x => x.text),
       spacing: { after: 120 },
     }),
@@ -65,8 +66,8 @@ export async function generateDocx(resume: Resume, templateId: string) {
     children.push(
       new Paragraph({
         children: contacts.flatMap((c, i) => [
-          r(`${c.label}：${c.value}`, { size: sz - 3, color: t.primary, font: t.font }),
-          i < contacts.length - 1 ? r('    ', { size: sz - 3, color: t.primary }) : r('', {}),
+          makeRun(`${c.label}：${c.value}`, { size: theme.fontSize - 3, color: theme.primary, font: theme.font }),
+          i < contacts.length - 1 ? makeRun('    ', { size: theme.fontSize - 3, color: theme.primary }) : makeRun('', {}),
         ]).filter(x => x.text),
         spacing: { after: 40 },
       })
@@ -79,29 +80,29 @@ export async function generateDocx(resume: Resume, templateId: string) {
   if (links.length > 0) {
     children.push(
       new Paragraph({
-        children: links.map(l => r(`${l.label}：${l.value}`, { size: sz - 3, color: t.primary, font: t.font })),
+        children: links.map(l => makeRun(`${l.label}：${l.value}`, { size: theme.fontSize - 3, color: theme.primary, font: theme.font })),
         spacing: { after: 160 },
       })
     )
   }
 
-  children.push(separator(t))
+  children.push(styleSeparator(theme))
 
   /* ── 个人简介 ── */
   if (resume.profile) {
-    children.push(sectionTitle('个人简介', t))
-    children.push(new Paragraph({ children: [r(resume.profile, { size: sz, color: '333333', font: t.font })], spacing: { after: 200 }, indent: { left: 80 } }))
+    children.push(sectionTitle('个人简介', theme))
+    children.push(new Paragraph({ children: [makeRun(resume.profile, { size: theme.fontSize, color: '333333', font: theme.font })], spacing: { after: 200 }, indent: { left: 80 } }))
   }
 
   /* ── 专业技能 ── */
   if (resume.skills.groups.length > 0) {
-    children.push(sectionTitle('专业技能', t))
+    children.push(sectionTitle('专业技能', theme))
     for (const group of resume.skills.groups) {
       children.push(
         new Paragraph({
           children: [
-            r(`${group.name}：`, { bold: true, size: sz, color: t.primary, font: t.font }),
-            r(group.items.join('、'), { size: sz, color: '333333', font: t.font }),
+            makeRun(`${group.name}：`, { bold: true, size: theme.fontSize, color: theme.primary, font: theme.font }),
+            makeRun(group.items.join('、'), { size: theme.fontSize, color: '333333', font: theme.font }),
           ],
           spacing: { after: 60 },
         })
@@ -112,24 +113,24 @@ export async function generateDocx(resume: Resume, templateId: string) {
 
   /* ── 工作经历 ── */
   if (resume.work.length > 0) {
-    children.push(sectionTitle('工作经历', t))
+    children.push(sectionTitle('工作经历', theme))
     for (const w of resume.work) {
       children.push(
         new Paragraph({
           children: [
-            r(`${w.company}  `, { bold: true, size: sz + 2, color: '222222', font: t.font }),
-            r(w.position, { size: sz, color: t.primary, font: t.font }),
-            r(`  ${w.startDate || ''} ~ ${w.endDate || ''}`, { size: sz - 4, color: '999999', font: t.font }),
+            makeRun(`${w.company}  `, { bold: true, size: theme.fontSize + 2, color: '222222', font: theme.font }),
+            makeRun(w.position, { size: theme.fontSize, color: theme.primary, font: theme.font }),
+            makeRun(`  ${w.startDate || ''} ~ ${w.endDate || ''}`, { size: theme.fontSize - 4, color: '999999', font: theme.font }),
           ],
           spacing: { after: 80 },
         }),
       )
       if (w.description) {
-        children.push(new Paragraph({ children: [r(w.description, { size: sz, color: '444444', font: t.font })], spacing: { after: 60 }, indent: { left: 120 } }))
+        children.push(new Paragraph({ children: [makeRun(w.description, { size: theme.fontSize, color: '444444', font: theme.font })], spacing: { after: 60 }, indent: { left: 120 } }))
       }
       if (w.achievements && w.achievements.length > 0) {
         for (const a of w.achievements) {
-          children.push(new Paragraph({ children: [r(`• ${a}`, { size: sz - 1, color: '444444', font: t.font, italics: true })], spacing: { after: 20 }, indent: { left: 240 } }))
+          children.push(new Paragraph({ children: [makeRun(`• ${a}`, { size: theme.fontSize - 1, color: '444444', font: theme.font, italics: true })], spacing: { after: 20 }, indent: { left: 240 } }))
         }
       }
       children.push(new Paragraph({ spacing: { after: 160 }, children: [] }))
@@ -138,23 +139,23 @@ export async function generateDocx(resume: Resume, templateId: string) {
 
   /* ── 项目经验 ── */
   if (resume.projects.length > 0) {
-    children.push(sectionTitle('项目经验', t))
+    children.push(sectionTitle('项目经验', theme))
     for (const p of resume.projects) {
       children.push(
         new Paragraph({
           children: [
-            r(`${p.name}  `, { bold: true, size: sz + 2, color: '222222', font: t.font }),
-            r(p.role, { size: sz, color: t.primary, font: t.font }),
+            makeRun(`${p.name}  `, { bold: true, size: theme.fontSize + 2, color: '222222', font: theme.font }),
+            makeRun(p.role, { size: theme.fontSize, color: theme.primary, font: theme.font }),
           ],
           spacing: { after: 80 },
         }),
       )
       if (p.description) {
-        children.push(new Paragraph({ children: [r(p.description, { size: sz, color: '444444', font: t.font })], spacing: { after: 60 }, indent: { left: 120 } }))
+        children.push(new Paragraph({ children: [makeRun(p.description, { size: theme.fontSize, color: '444444', font: theme.font })], spacing: { after: 60 }, indent: { left: 120 } }))
       }
       if (p.highlights && p.highlights.length > 0) {
         for (const h of p.highlights) {
-          children.push(new Paragraph({ children: [r(`• ${h}`, { size: sz - 1, color: '444444', font: t.font, italics: true })], spacing: { after: 20 }, indent: { left: 240 } }))
+          children.push(new Paragraph({ children: [makeRun(`• ${h}`, { size: theme.fontSize - 1, color: '444444', font: theme.font, italics: true })], spacing: { after: 20 }, indent: { left: 240 } }))
         }
       }
       children.push(new Paragraph({ spacing: { after: 160 }, children: [] }))
@@ -163,14 +164,14 @@ export async function generateDocx(resume: Resume, templateId: string) {
 
   /* ── 教育经历 ── */
   if (resume.education.length > 0) {
-    children.push(sectionTitle('教育背景', t))
+    children.push(sectionTitle('教育背景', theme))
     for (const edu of resume.education) {
       children.push(
         new Paragraph({
           children: [
-            r(`${edu.school}  `, { bold: true, size: sz + 2, color: '222222', font: t.font }),
-            r(`${edu.major} · ${edu.degree}`, { size: sz, color: '666666', font: t.font }),
-            r(`  ${edu.startDate || ''} ~ ${edu.endDate || ''}`, { size: sz - 4, color: '999999', font: t.font }),
+            makeRun(`${edu.school}  `, { bold: true, size: theme.fontSize + 2, color: '222222', font: theme.font }),
+            makeRun(`${edu.major} · ${edu.degree}`, { size: theme.fontSize, color: '666666', font: theme.font }),
+            makeRun(`  ${edu.startDate || ''} ~ ${edu.endDate || ''}`, { size: theme.fontSize - 4, color: '999999', font: theme.font }),
           ],
           spacing: { after: 80 },
         }),
@@ -182,12 +183,12 @@ export async function generateDocx(resume: Resume, templateId: string) {
   /* ── 证书/语言 ── */
   const hasCerts = resume.certificates.list.length > 0 || (resume.certificates.languages || []).length > 0
   if (hasCerts) {
-    children.push(sectionTitle('证书 & 语言', t))
+    children.push(sectionTitle('证书 & 语言', theme))
     if (resume.certificates.list.length > 0) {
-      children.push(new Paragraph({ children: [r(resume.certificates.list.join('  ·  '), { size: sz, color: '444444', font: t.font })], spacing: { after: 40 } }))
+      children.push(new Paragraph({ children: [makeRun(resume.certificates.list.join('  ·  '), { size: theme.fontSize, color: '444444', font: theme.font })], spacing: { after: 40 } }))
     }
     for (const l of (resume.certificates.languages || [])) {
-      children.push(new Paragraph({ children: [r(`${l.name}（${l.level}）`, { size: sz, color: '444444', font: t.font })], spacing: { after: 40 } }))
+      children.push(new Paragraph({ children: [makeRun(`${l.name}（${l.level}）`, { size: theme.fontSize, color: '444444', font: theme.font })], spacing: { after: 40 } }))
     }
   }
 
