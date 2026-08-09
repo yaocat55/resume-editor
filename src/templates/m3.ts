@@ -87,7 +87,6 @@ export const m3TemplateHTML = `<!DOCTYPE html>
     padding: 4px 12px; border-radius: 16px; text-decoration: none; white-space: nowrap;
     display: inline-flex; align-items: center; gap: 4px;
   }
-  .contact-row a { background: #d7e3ff; }
 
   .resume-section { margin-bottom: 28px; }
   .resume-section:last-child { margin-bottom: 0; }
