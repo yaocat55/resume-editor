@@ -282,7 +282,7 @@ const EditorLayout: React.FC = () => {
         </Box>
         <Divider sx={{ width: '80%', my: 0.3 }} />
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3, pb: 0.5 }}>
-          <Tooltip title={t('sidebar.fullPolish')} placement="right">
+          <Tooltip title="AI 全文润色" placement="right">
             <IconButton
               size="small"
               onClick={handleFullPolish}
@@ -293,6 +293,15 @@ const EditorLayout: React.FC = () => {
               }}
             >
               <AiIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="导出 Word (.docx)" placement="right">
+            <IconButton
+              size="small"
+              onClick={() => generateDocx(useResumeStore.getState().resume, '')}
+              sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 700 }}
+            >
+              W
             </IconButton>
           </Tooltip>
           <Tooltip title={themeMode === 'dark' ? t('sidebar.toggleThemeLight') : t('sidebar.toggleTheme')} placement="right">
