@@ -30,43 +30,43 @@ interface PdfTheme {
 const THEMES: Record<string, PdfTheme> = {
   '__m3_expressive__': {
     id: '__m3_expressive__', name: 'Material 3', primary: '#4263A0', bg: '#E8EEF5', accent: '#D7E3FF',
-    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'm3-pill',
+    font: 'Roboto', dark: false, pageColor: '#FFFFFF', headerStyle: 'm3-pill',
   },
   '__default__': {
     id: '__default__', name: '经典专业', primary: '#2563EB', bg: '#F0F2F5', accent: '#D0D5DD',
-    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'classic-underline',
+    font: 'Roboto', dark: false, pageColor: '#FFFFFF', headerStyle: 'classic-underline',
   },
   '__minimal__': {
     id: '__minimal__', name: '极简 ATS', primary: '#222222', bg: '#FFFFFF', accent: '#DDDDDD',
-    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'minimal-rule',
+    font: 'Roboto', dark: false, pageColor: '#FFFFFF', headerStyle: 'minimal-rule',
   },
   '__academic__': {
     id: '__academic__', name: '学术', primary: '#5C3D1E', bg: '#F5F0E5', accent: '#C9B99A',
-    font: 'Times', dark: false, pageColor: '#FFFAF0', headerStyle: 'academic-ornament',
+    font: 'Roboto', dark: false, pageColor: '#FFFAF0', headerStyle: 'academic-ornament',
   },
   '__creative__': {
     id: '__creative__', name: '创意设计', primary: '#A78BFA', bg: '#1E1B4B', accent: '#4C1D95',
-    font: 'PingFang SC', dark: true, pageColor: '#1E1B4B', headerStyle: 'creative-gradient',
+    font: 'Roboto', dark: true, pageColor: '#1E1B4B', headerStyle: 'creative-gradient',
   },
   '__github__': {
     id: '__github__', name: 'GitHub', primary: '#58A6FF', bg: '#0D1117', accent: '#30363D',
-    font: 'PingFang SC', dark: true, pageColor: '#0D1117', headerStyle: 'github-card',
+    font: 'Roboto', dark: true, pageColor: '#0D1117', headerStyle: 'github-card',
   },
   '__vscode__': {
     id: '__vscode__', name: 'VS Code', primary: '#569CD6', bg: '#1E1E1E', accent: '#007ACC',
-    font: 'PingFang SC', dark: true, pageColor: '#1E1E1E', headerStyle: 'vscode-sidebar',
+    font: 'Roboto', dark: true, pageColor: '#1E1E1E', headerStyle: 'vscode-sidebar',
   },
   '__social__': {
     id: '__social__', name: '小红书', primary: '#FF2442', bg: '#FFF0F0', accent: '#FF6B81',
-    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'social-banner',
+    font: 'Roboto', dark: false, pageColor: '#FFFFFF', headerStyle: 'social-banner',
   },
   '__bento__': {
     id: '__bento__', name: 'Bento 网格', primary: '#22D3EE', bg: '#0A0A0A', accent: '#333333',
-    font: 'PingFang SC', dark: true, pageColor: '#0A0A0A', headerStyle: 'bento-dark',
+    font: 'Roboto', dark: true, pageColor: '#0A0A0A', headerStyle: 'bento-dark',
   },
   '__fde__': {
     id: '__fde__', name: 'FDE 实施', primary: '#166534', bg: '#F0FDF4', accent: '#86EFAC',
-    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'fde-teal',
+    font: 'Roboto', dark: false, pageColor: '#FFFFFF', headerStyle: 'fde-teal',
   },
 }
 
