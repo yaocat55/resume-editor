@@ -6,6 +6,7 @@ import useTemplateStore from '../../store/templateStore'
 import useAIStore from '../../features/ai/store'
 import { defaultTemplate, populateShadowDOM } from '../../templates'
 import { generateDocx } from '../../features/export/docx'
+import { generatePDF } from '../../features/export/pdf'
 import type { Resume } from '../../types/resume'
 
 declare global { interface Window { electronAPI?: { exportPDF: (html: string) => Promise<boolean>; onMenuExportPDF: (cb: () => void) => void } } }
@@ -186,7 +187,7 @@ ${css}</style></head><body>${html}</body></html>`); w.document.close(); setTimeo
           <Tooltip title={paged ? '连续预览' : '分页预览'}><ToggleButton value="page" selected={paged} onChange={() => setPaged(!paged)} size="small" sx={{ border: 0, p: 0.5 }}><PagePreviewIcon fontSize="small" color={paged ? 'primary' : 'disabled'} /></ToggleButton></Tooltip>
           <Tooltip title="刷新"><IconButton size="small" onClick={refresh}><RefreshIcon fontSize="small" /></IconButton></Tooltip>
           <Tooltip title="导出 Word (.docx)"><IconButton size="small" onClick={() => generateDocx(resume, tpl.id)}><DownloadIcon fontSize="small" /></IconButton></Tooltip>
-          <Tooltip title="导出 PDF（原生打印）"><IconButton size="small" onClick={exportPDF}><PdfIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="导出 PDF（pdfmake）"><IconButton size="small" onClick={() => generatePDF(resume, tpl.id)}><PdfIcon fontSize="small" /></IconButton></Tooltip>
         </Box>
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', p: 2 }}>
