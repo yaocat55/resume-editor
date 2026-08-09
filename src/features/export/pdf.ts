@@ -59,7 +59,6 @@ export function generatePDF(resume: Resume, templateId: string) {
   const t = THEME[templateId] || THEME['__default__']
   const pf = resume.personal
   const content: Content[] = []
-  const pageCount = { current: 1, total: 1 }
 
   /* ── Header ── */
   content.push(h1(pf.fullName || '未填写', t.primary))
