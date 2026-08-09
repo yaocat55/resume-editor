@@ -1,6 +1,7 @@
 /**
  * PDF 导出 — 使用 pdfmake 直接从数据生成 PDF
  * 绕过浏览器打印引擎，精确控制分页和样式
+ * 10 套模板各自有独立的 PDF 视觉风格
  */
 import pdfMake from 'pdfmake/build/pdfmake'
 import pdfFonts from 'pdfmake/build/vfs_fonts'
@@ -8,181 +9,240 @@ import type { Resume } from '../../types/resume'
 
 pdfMake.vfs = pdfFonts.vfs
 
+type Content = any
+type LayoutFn = (resume: Resume, t: PdfTheme) => Content[]
+
 interface PdfTheme {
-  primary: string; accent: string; font: string
+  id: string
+  name: string
+  primary: string
+  bg: string
+  accent: string
+  font: string
+  /** Dark background template? */
+  dark: boolean
+  /** Page background color */
+  pageColor: string
+  /** Header style per template */
+  headerStyle: 'm3-pill' | 'classic-underline' | 'minimal-rule' | 'academic-ornament' | 'creative-gradient' | 'github-card' | 'vscode-sidebar' | 'social-banner' | 'bento-dark' | 'fde-teal'
 }
 
-const THEME: Record<string, PdfTheme> = {
-  '__m3_expressive__': { primary: '#4263A0', accent: '#D7E3FF', font: 'PingFang SC' },
-  '__default__':       { primary: '#1E293B', accent: '#D0D5DD', font: 'PingFang SC' },
-  '__minimal__':       { primary: '#222222', accent: '#DDDDDD', font: 'PingFang SC' },
-  '__academic__':      { primary: '#5C3D1E', accent: '#C9B99A', font: 'Times' },
-  '__creative__':      { primary: '#4C1D95', accent: '#C4B5FD', font: 'PingFang SC' },
-  '__github__':        { primary: '#58A6FF', accent: '#30363D', font: 'PingFang SC' },
-  '__vscode__':        { primary: '#569CD6', accent: '#007ACC', font: 'PingFang SC' },
-  '__social__':        { primary: '#FF2442', accent: '#FF6B81', font: 'PingFang SC' },
-  '__bento__':         { primary: '#FFFFFF', accent: '#333333', font: 'PingFang SC' },
-  '__fde__':           { primary: '#166534', accent: '#86EFAC', font: 'PingFang SC' },
+const THEMES: Record<string, PdfTheme> = {
+  '__m3_expressive__': {
+    id: '__m3_expressive__', name: 'Material 3', primary: '#4263A0', bg: '#E8EEF5', accent: '#D7E3FF',
+    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'm3-pill',
+  },
+  '__default__': {
+    id: '__default__', name: '经典专业', primary: '#2563EB', bg: '#F0F2F5', accent: '#D0D5DD',
+    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'classic-underline',
+  },
+  '__minimal__': {
+    id: '__minimal__', name: '极简 ATS', primary: '#222222', bg: '#FFFFFF', accent: '#DDDDDD',
+    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'minimal-rule',
+  },
+  '__academic__': {
+    id: '__academic__', name: '学术', primary: '#5C3D1E', bg: '#F5F0E5', accent: '#C9B99A',
+    font: 'Times', dark: false, pageColor: '#FFFAF0', headerStyle: 'academic-ornament',
+  },
+  '__creative__': {
+    id: '__creative__', name: '创意设计', primary: '#A78BFA', bg: '#1E1B4B', accent: '#4C1D95',
+    font: 'PingFang SC', dark: true, pageColor: '#1E1B4B', headerStyle: 'creative-gradient',
+  },
+  '__github__': {
+    id: '__github__', name: 'GitHub', primary: '#58A6FF', bg: '#0D1117', accent: '#30363D',
+    font: 'PingFang SC', dark: true, pageColor: '#0D1117', headerStyle: 'github-card',
+  },
+  '__vscode__': {
+    id: '__vscode__', name: 'VS Code', primary: '#569CD6', bg: '#1E1E1E', accent: '#007ACC',
+    font: 'PingFang SC', dark: true, pageColor: '#1E1E1E', headerStyle: 'vscode-sidebar',
+  },
+  '__social__': {
+    id: '__social__', name: '小红书', primary: '#FF2442', bg: '#FFF0F0', accent: '#FF6B81',
+    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'social-banner',
+  },
+  '__bento__': {
+    id: '__bento__', name: 'Bento 网格', primary: '#22D3EE', bg: '#0A0A0A', accent: '#333333',
+    font: 'PingFang SC', dark: true, pageColor: '#0A0A0A', headerStyle: 'bento-dark',
+  },
+  '__fde__': {
+    id: '__fde__', name: 'FDE 实施', primary: '#166534', bg: '#F0FDF4', accent: '#86EFAC',
+    font: 'PingFang SC', dark: false, pageColor: '#FFFFFF', headerStyle: 'fde-teal',
+  },
 }
 
-type Content = any // pdfmake Content type
+/* ── Style builders per theme ── */
 
-function h1(text: string, color: string): Content {
-  return { text, fontSize: 26, bold: true, color, margin: [0, 0, 0, 6] }
-}
-
-function h2(text: string, color: string): Content {
-  return { text, fontSize: 14, bold: true, color, margin: [0, 12, 0, 6] }
-}
-
-function body(text: string, opts?: { indent?: number }): Content {
-  return { text, fontSize: 10, color: '#333333', margin: [opts?.indent || 0, 0, 0, 4], lineHeight: 1.6 }
-}
-
-function pill(text: string, color: string): Content {
-  return { text, fontSize: 9, color, margin: [0, 0, 0, 2] }
-}
-
-function sectionDivider(color: string): Content {
-  return { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 515, y2: 4, lineWidth: 0.5, lineColor: color }], margin: [0, 6, 0, 6] }
-}
-
-function contactRow(items: string[], color: string): Content {
-  return {
-    columns: items.map(text => ({ text, fontSize: 9, color, width: 'auto' })),
-    columnGap: 16,
-    margin: [0, 2, 0, 2],
+function sectionDivider(t: PdfTheme): Content {
+  switch (t.headerStyle) {
+    case 'creative-gradient':
+      return { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 515, y2: 4, lineWidth: 1, lineColor: t.accent, opacity: 0.5 }], margin: [0, 6, 0, 6] }
+    case 'github-card':
+      return { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 515, y2: 4, lineWidth: 0.5, lineColor: t.accent }], margin: [0, 8, 0, 8] }
+    case 'academic-ornament':
+      return { text: '❧ ❧ ❧', alignment: 'center', fontSize: 10, color: t.accent, margin: [0, 8, 0, 8] }
+    case 'social-banner':
+      return { canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 3, color: t.primary }], margin: [0, 6, 0, 10] }
+    default:
+      return { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 515, y2: 4, lineWidth: 0.5, lineColor: t.primary, opacity: 0.2 }], margin: [0, 6, 0, 6] }
   }
 }
 
-export function generatePDF(resume: Resume, templateId: string) {
-  const t = THEME[templateId] || THEME['__default__']
-  const pf = resume.personal
+function sectionTitle(text: string, t: PdfTheme): Content {
+  const color = t.dark ? t.primary : t.primary
+  switch (t.headerStyle) {
+    case 'academic-ornament':
+      return { text, fontSize: 14, bold: true, color, margin: [0, 12, 0, 4], fontFeatures: ['smcp'] }
+    case 'github-card':
+      return { text, fontSize: 13, bold: true, color, margin: [0, 12, 0, 6] }
+    case 'creative-gradient':
+      return { text, fontSize: 15, bold: true, color: t.primary, margin: [0, 14, 0, 6] }
+    default:
+      return { text, fontSize: 13, bold: true, color, margin: [0, 12, 0, 6] }
+  }
+}
+
+function headerName(text: string, t: PdfTheme): Content {
+  if (t.headerStyle === 'social-banner') {
+    return { text, fontSize: 28, bold: true, color: t.primary, margin: [0, 0, 0, 2] }
+  }
+  return { text, fontSize: 24, bold: true, color: t.dark ? '#FFFFFF' : t.primary, margin: [0, 0, 0, 4] }
+}
+
+function headerSubtitle(pf: any, t: PdfTheme): Content {
+  const parts = [pf.jobTitle, pf.gender, pf.age ? `${pf.age}岁` : ''].filter(Boolean)
+  return { text: parts.join('  ·  '), fontSize: 10, color: t.dark ? '#AAAAAA' : '#666666', margin: [0, 0, 0, 8] }
+}
+
+function contactLine(items: string[], t: PdfTheme): Content {
+  if (t.headerStyle === 'm3-pill') {
+    return {
+      columns: items.map(text => ({
+        text, fontSize: 8, color: t.primary,
+        background: t.bg, border: [3, 8, 3, 8], fillColor: t.bg,
+      })),
+      columnGap: 6, margin: [0, 2, 0, 2],
+    }
+  }
+  if (t.headerStyle === 'github-card') {
+    return { text: items.join('  │  '), fontSize: 8, color: '#8B949E', margin: [0, 2, 0, 2] }
+  }
+  return { text: items.join('  ·  '), fontSize: 9, color: t.dark ? '#CCCCCC' : t.primary, margin: [0, 2, 0, 2] }
+}
+
+function p(text: string, opts?: { indent?: number; color?: string; size?: number; bold?: boolean }): Content {
+  return { text, fontSize: opts?.size || 10, color: opts?.color || (opts?.bold ? '#222' : '#333'), margin: [opts?.indent || 0, 0, 0, 3], bold: !!opts?.bold, lineHeight: 1.5 }
+}
+
+/* ── Main generator ── */
+
+function renderDocument(resume: Resume, t: PdfTheme): Content[] {
   const content: Content[] = []
+  const pf = resume.personal
+  const textColor = t.dark ? '#DDDDDD' : '#222222'
+  const bodyColor = t.dark ? '#BBBBBB' : '#444444'
 
   /* ── Header ── */
-  content.push(h1(pf.fullName || '未填写', t.primary))
+  content.push(headerName(pf.fullName || '', t))
+  content.push(headerSubtitle(pf, t))
 
-  const subtitle = [pf.jobTitle, pf.gender, pf.age ? `${pf.age}岁` : ''].filter(Boolean).join('  ·  ')
-  if (subtitle) content.push({ text: subtitle, fontSize: 11, color: '#666666', margin: [0, 0, 0, 10] })
-
-  // Contact pills
   const contacts = [
-    pf.phone && `📞 ${pf.phone}`,
-    pf.email && `✉ ${pf.email}`,
-    pf.location && `📍 ${pf.location}`,
+    pf.phone && `📞 ${pf.phone}`, pf.email && `✉ ${pf.email}`, pf.location && `📍 ${pf.location}`,
   ].filter(Boolean) as string[]
-  if (contacts.length > 0) content.push(contactRow(contacts, t.primary))
+  if (contacts.length) content.push(contactLine(contacts, t))
+  const links = [pf.website && `🌐 ${pf.website}`, pf.github && `🐙 ${pf.github}`].filter(Boolean) as string[]
+  if (links.length) content.push(contactLine(links, t))
 
-  const links = [
-    pf.website && `🌐 ${pf.website}`,
-    pf.github && `🐙 ${pf.github}`,
-  ].filter(Boolean) as string[]
-  if (links.length > 0) content.push(contactRow(links, t.primary))
+  content.push(sectionDivider(t))
 
-  content.push(sectionDivider(t.accent))
-
-  /* ── 个人简介 ── */
+  /* ── Profile ── */
   if (resume.profile) {
-    content.push(h2('个人简介', t.primary))
-    content.push(body(resume.profile, { indent: 4 }))
+    content.push(sectionTitle('个人简介', t))
+    content.push(p(resume.profile, { indent: 4, color: bodyColor }))
   }
 
-  /* ── 专业技能 ── */
-  if (resume.skills.groups.length > 0) {
-    content.push(h2('专业技能', t.primary))
+  /* ── Skills ── */
+  if (resume.skills.groups.length) {
+    content.push(sectionTitle('专业技能', t))
     for (const g of resume.skills.groups) {
       content.push({
-        text: [
-          { text: `${g.name}：`, bold: true, fontSize: 10, color: t.primary },
-          { text: g.items.join('、'), fontSize: 10, color: '#333333' },
-        ],
-        margin: [0, 0, 0, 4],
+        text: [{ text: `${g.name}：`, bold: true, fontSize: 10, color: t.primary }, { text: g.items.join('、'), fontSize: 10, color: textColor }],
+        margin: [0, 0, 0, 3],
       })
     }
   }
 
-  /* ── 工作经历 ── */
-  if (resume.work.length > 0) {
-    content.push(h2('工作经历', t.primary))
+  /* ── Work ── */
+  if (resume.work.length) {
+    content.push(sectionTitle('工作经历', t))
     for (const w of resume.work) {
       content.push({
         text: [
-          { text: w.company, bold: true, fontSize: 11, color: '#222222' },
-          { text: `  ${w.position}`, fontSize: 11, color: t.primary },
-        ],
-        margin: [0, 6, 0, 2],
+          { text: w.company, bold: true, fontSize: 11, color: textColor },
+          { text: `  ${w.position}`, fontSize: 10, color: t.primary },
+        ], margin: [0, 6, 0, 2],
       })
-      if (w.description) content.push(body(w.description, { indent: 8 }))
-      if (w.achievements) {
-        for (const a of w.achievements) {
-          content.push(body(`• ${a}`, { indent: 16 }))
-        }
-      }
-      content.push({ text: `${w.startDate || ''} ~ ${w.endDate || ''}`, fontSize: 8, color: '#AAAAAA', margin: [0, 2, 0, 10] })
+      if (w.description) content.push(p(w.description, { indent: 8, color: bodyColor }))
+      for (const a of (w.achievements || [])) content.push(p(`• ${a}`, { indent: 16, color: bodyColor, size: 9 }))
+      content.push({ text: `${w.startDate || ''} ~ ${w.endDate || ''}`, fontSize: 7, color: '#999', margin: [0, 2, 0, 8] })
     }
   }
 
-  /* ── 项目经验 ── */
-  if (resume.projects.length > 0) {
-    content.push(h2('项目经验', t.primary))
-    for (const p of resume.projects) {
+  /* ── Projects ── */
+  if (resume.projects.length) {
+    content.push(sectionTitle('项目经验', t))
+    for (const pj of resume.projects) {
       content.push({
         text: [
-          { text: p.name, bold: true, fontSize: 11, color: '#222222' },
-          { text: `  ${p.role}`, fontSize: 11, color: t.primary },
-        ],
-        margin: [0, 6, 0, 2],
+          { text: pj.name, bold: true, fontSize: 11, color: textColor },
+          { text: `  ${pj.role}`, fontSize: 10, color: t.primary },
+        ], margin: [0, 6, 0, 2],
       })
-      if (p.description) content.push(body(p.description, { indent: 8 }))
-      if (p.highlights) {
-        for (const h of p.highlights) content.push(body(`• ${h}`, { indent: 16 }))
-      }
-      content.push({ text: '', margin: [0, 0, 0, 8] })
+      if (pj.description) content.push(p(pj.description, { indent: 8, color: bodyColor }))
+      for (const h of (pj.highlights || [])) content.push(p(`• ${h}`, { indent: 16, color: bodyColor, size: 9 }))
+      content.push({ text: '', margin: [0, 0, 0, 6] })
     }
   }
 
-  /* ── 教育经历 ── */
-  if (resume.education.length > 0) {
-    content.push(h2('教育背景', t.primary))
+  /* ── Education ── */
+  if (resume.education.length) {
+    content.push(sectionTitle('教育背景', t))
     for (const edu of resume.education) {
       content.push({
         text: [
-          { text: edu.school, bold: true, fontSize: 11, color: '#222222' },
-          { text: `  ${edu.major} · ${edu.degree}`, fontSize: 10, color: '#666666' },
-        ],
-        margin: [0, 2, 0, 2],
+          { text: edu.school, bold: true, fontSize: 11, color: textColor },
+          { text: `  ${edu.major} · ${edu.degree}`, fontSize: 10, color: '#888' },
+        ], margin: [0, 2, 0, 2],
       })
-      content.push({ text: `${edu.startDate || ''} ~ ${edu.endDate || ''}`, fontSize: 8, color: '#AAAAAA', margin: [0, 0, 0, 8] })
+      content.push({ text: `${edu.startDate || ''} ~ ${edu.endDate || ''}`, fontSize: 7, color: '#999', margin: [0, 0, 0, 6] })
     }
   }
 
-  /* ── 证书/语言 ── */
-  const hasCerts = resume.certificates.list.length > 0 || (resume.certificates.languages || []).length > 0
+  /* ── Certs / Languages ── */
+  const hasCerts = resume.certificates.list.length || (resume.certificates.languages || []).length
   if (hasCerts) {
-    content.push(h2('证书 & 语言', t.primary))
-    if (resume.certificates.list.length > 0) {
-      content.push(body(resume.certificates.list.join('  ·  ')))
-    }
-    for (const l of (resume.certificates.languages || [])) {
-      content.push(body(`${l.name}（${l.level}）`))
-    }
+    content.push(sectionTitle('证书 & 语言', t))
+    if (resume.certificates.list.length) content.push(p(resume.certificates.list.join('  ·  '), { color: bodyColor }))
+    for (const l of (resume.certificates.languages || [])) content.push(p(`${l.name}（${l.level}）`, { color: bodyColor }))
   }
 
-  /* ── Generate PDF ── */
+  return content
+}
+
+export function generatePDF(resume: Resume, templateId: string) {
+  const t = THEMES[templateId] || THEMES['__default__']
+  const content = renderDocument(resume, t)
+
   const doc = pdfMake.createPdf({
     pageSize: 'A4',
     pageMargins: [40, 40, 40, 40],
     content,
-    defaultStyle: { font: t.font },
+    background: t.dark ? { canvas: [{ type: 'rect', x: 0, y: 0, w: 595.28, h: 841.89, color: t.pageColor }] } : undefined,
+    defaultStyle: { font: t.font, color: t.dark ? '#DDDDDD' : '#333333' },
     footer: (currentPage: number, totalPages: number) => {
       if (totalPages <= 1) return null
-      return {
-        text: `${pf.fullName || '简历'} · 第 ${currentPage} 页 / 共 ${totalPages} 页`,
-        fontSize: 8, color: '#AAAAAA', alignment: 'center', margin: [0, 10, 0, 0],
-      }
+      return { text: `${resume.personal.fullName || '简历'} · ${currentPage}/${totalPages}`, fontSize: 7, color: '#999', alignment: 'center', margin: [0, 10, 0, 0] }
     },
   })
 
-  doc.download(`${pf.fullName || '简历'}-简历.pdf`)
+  doc.download(`${resume.personal.fullName || '简历'}-${t.name}.pdf`)
 }
