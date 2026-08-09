@@ -65,8 +65,6 @@ import TemplateManager from '../editor/TemplateManager'
 import ResumePreview from '../preview/ResumePreview'
 import ErrorBoundary from '../ErrorBoundary'
 import FullPolishDialog from '../FullPolishDialog'
-import { generateDocx } from '../../features/export/docx'
-import { generatePDF } from '../../features/export/pdf'
 import type { Resume } from '../../types/resume'
 
 const EditorLayout: React.FC = () => {
@@ -294,24 +292,6 @@ const EditorLayout: React.FC = () => {
               }}
             >
               <AiIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="导出 Word (.docx)" placement="right">
-            <IconButton
-              size="small"
-              onClick={() => generateDocx(useResumeStore.getState().resume, '')}
-              sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 700 }}
-            >
-              W
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="导出 PDF（pdfmake）" placement="right">
-            <IconButton
-              size="small"
-              onClick={() => generatePDF(useResumeStore.getState().resume, '')}
-              sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 700 }}
-            >
-              P
             </IconButton>
           </Tooltip>
           <Tooltip title={themeMode === 'dark' ? t('sidebar.toggleThemeLight') : t('sidebar.toggleTheme')} placement="right">

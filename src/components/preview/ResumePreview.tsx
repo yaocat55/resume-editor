@@ -3,7 +3,10 @@ import { Box, IconButton, Tooltip, Typography, Slider, ToggleButton } from '@mui
 import { Refresh as RefreshIcon, FileDownload as DownloadIcon, PictureAsPdf as PdfIcon, CropSquare as FitIcon, ViewDayOutlined as PagePreviewIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import useTemplateStore from '../../store/templateStore'
+import useAIStore from '../../features/ai/store'
 import { defaultTemplate, populateShadowDOM } from '../../templates'
+import { generatePDF } from '../../features/export/pdf'
+import { generateDocx } from '../../features/export/docx'
 import type { Resume } from '../../types/resume'
 
 declare global { interface Window { electronAPI?: { exportPDF: (html: string) => Promise<boolean>; onMenuExportPDF: (cb: () => void) => void } } }
@@ -183,7 +186,8 @@ ${css}</style></head><body>${html}</body></html>`); w.document.close(); setTimeo
           <Tooltip title={force1 ? '取消强制一页' : '强制一页'}><ToggleButton value="fit" selected={force1} onChange={() => setForce1(!force1)} size="small" sx={{ border: 0, p: 0.5 }}><FitIcon fontSize="small" color={force1 ? 'primary' : 'disabled'} /></ToggleButton></Tooltip>
           <Tooltip title={paged ? '连续预览' : '分页预览'}><ToggleButton value="page" selected={paged} onChange={() => setPaged(!paged)} size="small" sx={{ border: 0, p: 0.5 }}><PagePreviewIcon fontSize="small" color={paged ? 'primary' : 'disabled'} /></ToggleButton></Tooltip>
           <Tooltip title="刷新"><IconButton size="small" onClick={refresh}><RefreshIcon fontSize="small" /></IconButton></Tooltip>
-          <Tooltip title="导出 PDF"><IconButton size="small" onClick={exportPDF}><PdfIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="导出 Word (.docx)"><IconButton size="small" onClick={() => generateDocx(resume, tpl.id)}><DownloadIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="导出 PDF (pdfmake)"><IconButton size="small" onClick={() => generatePDF(resume, tpl.id)}><PdfIcon fontSize="small" /></IconButton></Tooltip>
         </Box>
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', p: 2 }}>
