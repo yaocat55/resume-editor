@@ -39,8 +39,7 @@ function styleSeparator(theme: DocxTheme) {
 }
 
 export async function generateDocx(resume: Resume, templateId: string) {
-  const t = THEME[templateId] || THEME['__default__']
-  const sz = t.fontSize
+  const theme = THEME[templateId] || THEME['__default__']
   const children: any[] = []
 
   /* ── Header ── */
