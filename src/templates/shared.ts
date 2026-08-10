@@ -78,7 +78,7 @@ export function fmtDate(d: string | undefined): string {
  * Populate a Shadow DOM root with resume data using ID-based mapping.
  */
 export function populateShadowDOM(
-  root: ShadowRoot,
+  root: ShadowRoot | Element,
   data: Resume,
   visibleSections?: Record<string, boolean>,
   sectionOrder?: string[]
@@ -88,31 +88,31 @@ export function populateShadowDOM(
     const el = root.querySelector(id) as HTMLElement | null
     if (el) el.style.display = is(section) ? '' : 'none'
   }
-  const setVal = (sel: string, val: string) => {
+  const setVal = (sel: string, val: string, fieldName?: string) => {
     const el = root.querySelector(sel) as HTMLElement | null
-    if (el) {
-      if (val) { el.style.display = ''; const v = el.querySelector('.val'); if (v) v.textContent = val }
-      else { el.style.display = 'none' }
-    }
+    if (!el) return
+    const visible = fieldName ? (pf.visibleFields || {})[fieldName] !== false : true
+    if (val && visible) { el.style.display = ''; const v = el.querySelector('.val'); if (v) v.textContent = val }
+    else { el.style.display = 'none' }
   }
-  const setValAndHref = (sel: string, val: string) => {
+  const setValAndHref = (sel: string, val: string, fieldName?: string) => {
     const el = root.querySelector(sel) as HTMLElement | null
-    if (el) {
-      if (val) { el.style.display = ''; el.setAttribute('href', val); const v = el.querySelector('.val'); if (v) v.textContent = val }
-      else { el.style.display = 'none' }
-    }
+    if (!el) return
+    const visible = fieldName ? (pf.visibleFields || {})[fieldName] !== false : true
+    if (val && visible) { el.style.display = ''; el.setAttribute('href', val); const v = el.querySelector('.val'); if (v) v.textContent = val }
+    else { el.style.display = 'none' }
   }
   const pf = data.personal
   showOrHide('#personal', 'personal')
   if (pf.fullName) setText(root, '#fullName', pf.fullName)
-  if (pf.gender) setVal('#gender', pf.gender)
-  if (pf.age) setVal('#age', pf.age)
+  if (pf.gender) setVal('#gender', pf.gender, 'gender')
+  if (pf.age) setVal('#age', pf.age, 'age')
   if (pf.jobTitle) setText(root, '#jobTitle', pf.jobTitle)
-  setVal('#phone', pf.phone)
-  setVal('#email', pf.email)
-  setVal('#location', pf.location)
-  setValAndHref('#website', pf.website)
-  setValAndHref('#github', pf.github)
+  setVal('#phone', pf.phone, 'phone')
+  setVal('#email', pf.email, 'email')
+  setVal('#location', pf.location, 'location')
+  setValAndHref('#website', pf.website, 'website')
+  setValAndHref('#github', pf.github, 'github')
   if (pf.avatar) setAttr(root, '#avatar', 'src', pf.avatar)
 
   // Populate stats row (小红书 style) — respect visibleSections

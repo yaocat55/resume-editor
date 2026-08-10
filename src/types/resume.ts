@@ -14,6 +14,8 @@ export interface Personal {
   location: string
   website: string
   github: string
+  /** 每个字段是否可见，不存在 key 则默认可见 */
+  visibleFields?: Record<string, boolean>
 }
 
 /** 教育经历 */

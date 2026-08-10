@@ -2,6 +2,7 @@
  * PersonalEditor — 个人信息编辑表单
  *
  * 字段：头像（base64 上传）、姓名、求职意向、手机、邮箱、城市、网站、GitHub
+ * 每个非必填字段支持可见性切换（眼睛图标），隐藏后预览中 display:none，flex 自动填充间隙
  */
 import React, { useRef } from 'react'
 import {
@@ -15,9 +16,12 @@ import {
   Tooltip,
   MenuItem,
 } from '@mui/material'
-import { Close as CloseIcon, PhotoCamera as CameraIcon } from '@mui/icons-material'
+import { Close as CloseIcon, PhotoCamera as CameraIcon, Visibility as EyeIcon, VisibilityOff as EyeOffIcon } from '@mui/icons-material'
 import useResumeStore from '../../store/resumeStore'
 import FieldTip from '../shared/FieldTip'
+
+/** 需要可见性切换的字段 */
+const TOGGLE_FIELDS = ['gender', 'age', 'jobTitle', 'phone', 'email', 'location', 'website', 'github'] as const
 
 const PersonalEditor: React.FC = () => {
   const personal = useResumeStore((s) => s.resume.personal)
@@ -38,6 +42,28 @@ const PersonalEditor: React.FC = () => {
     updatePersonal({ avatar: '' })
     if (fileRef.current) fileRef.current.value = ''
   }
+
+  const toggleField = (field: string) => {
+    const vf = { ...(personal.visibleFields || {}) }
+    vf[field] = vf[field] === false ? true : false
+    updatePersonal({ visibleFields: vf })
+  }
+
+  const isVisible = (field: string) => {
+    return (personal.visibleFields || {})[field] !== false
+  }
+
+  const toggleIcon = (field: string) => (
+    <Tooltip title={isVisible(field) ? '隐藏' : '显示'}>
+      <IconButton
+        size="small"
+        onClick={(e) => { e.stopPropagation(); toggleField(field) }}
+        sx={{ ml: 0.5, p: 0.3, opacity: isVisible(field) ? 0.6 : 0.25 }}
+      >
+        {isVisible(field) ? <EyeIcon sx={{ fontSize: 16 }} /> : <EyeOffIcon sx={{ fontSize: 16 }} />}
+      </IconButton>
+    </Tooltip>
+  )
 
   return (
     <Box>
@@ -114,90 +140,133 @@ const PersonalEditor: React.FC = () => {
             placeholder="张明"
             required
           />
+
+          {/* 性别 + 年龄 一行 */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
-            label="性别"
-            select
-            value={personal.gender || ''}
-            onChange={(e) => updatePersonal({ gender: e.target.value })}
-            sx={{ flex: 1 }}
-            slotProps={{ inputLabel: { shrink: true } }}
-          >
-            {['男', '女'].map((g) => (
-              <MenuItem key={g} value={g}>{g}</MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            label="年龄"
-            value={personal.age || ''}
-            onChange={(e) => updatePersonal({ age: e.target.value })}
-            placeholder="26"
-            slotProps={{ inputLabel: { shrink: true } }}
-          />
-          <TextField
-            label={
-              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                求职意向
-                <FieldTip tip="强烈建议填写，HR 第一眼判断匹配度" />
-              </Box>
-            }
-            value={personal.jobTitle}
-            onChange={(e) => updatePersonal({ jobTitle: e.target.value })}
-            placeholder="前端开发工程师"
-          />
-          <TextField
-            label={
-              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                手机号 *
-              </Box>
-            }
-            value={personal.phone}
-            onChange={(e) => updatePersonal({ phone: e.target.value })}
-            placeholder="138-0000-8888"
-            required
-          />
-          <TextField
-            label={
-              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                邮箱 *
-              </Box>
-            }
-            value={personal.email}
-            onChange={(e) => updatePersonal({ email: e.target.value })}
-            placeholder="ming.zhang@email.com"
-            required
-          />
-          <TextField
-            label={
-              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                所在城市
-                <FieldTip tip="异地求职建议填写" />
-              </Box>
-            }
-            value={personal.location}
-            onChange={(e) => updatePersonal({ location: e.target.value })}
-            placeholder="深圳"
-          />
-          <TextField
-            label={
-              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                个人网站
-              </Box>
-            }
-            value={personal.website}
-            onChange={(e) => updatePersonal({ website: e.target.value })}
-            placeholder="https://ming.dev"
-          />
-          <TextField
-            label={
-              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                GitHub
-                <FieldTip tip="计算机岗强烈建议填写" />
-              </Box>
-            }
-            value={personal.github}
-            onChange={(e) => updatePersonal({ github: e.target.value })}
-            placeholder="https://github.com/mingdev"
-          />
+              label="性别"
+              select
+              value={personal.gender || ''}
+              onChange={(e) => updatePersonal({ gender: e.target.value })}
+              sx={{ flex: 1 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+            >
+              {['男', '女'].map((g) => (
+                <MenuItem key={g} value={g}>{g}</MenuItem>
+              ))}
+            </TextField>
+            {toggleIcon('gender')}
+            <TextField
+              label="年龄"
+              value={personal.age || ''}
+              onChange={(e) => updatePersonal({ age: e.target.value })}
+              placeholder="26"
+              sx={{ flex: 1 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            {toggleIcon('age')}
+          </Box>
+
+          {/* 求职意向 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  求职意向
+                  <FieldTip tip="强烈建议填写，HR 第一眼判断匹配度" />
+                </Box>
+              }
+              value={personal.jobTitle}
+              onChange={(e) => updatePersonal({ jobTitle: e.target.value })}
+              placeholder="前端开发工程师"
+              sx={{ flex: 1 }}
+            />
+            {toggleIcon('jobTitle')}
+          </Box>
+
+          {/* 手机号 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  手机号 *
+                </Box>
+              }
+              value={personal.phone}
+              onChange={(e) => updatePersonal({ phone: e.target.value })}
+              placeholder="138-0000-8888"
+              sx={{ flex: 1 }}
+              required
+            />
+            {toggleIcon('phone')}
+          </Box>
+
+          {/* 邮箱 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  邮箱 *
+                </Box>
+              }
+              value={personal.email}
+              onChange={(e) => updatePersonal({ email: e.target.value })}
+              placeholder="ming.zhang@email.com"
+              sx={{ flex: 1 }}
+              required
+            />
+            {toggleIcon('email')}
+          </Box>
+
+          {/* 城市 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  所在城市
+                  <FieldTip tip="异地求职建议填写" />
+                </Box>
+              }
+              value={personal.location}
+              onChange={(e) => updatePersonal({ location: e.target.value })}
+              placeholder="深圳"
+              sx={{ flex: 1 }}
+            />
+            {toggleIcon('location')}
+          </Box>
+
+          {/* 个人网站 */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  个人网站
+                </Box>
+              }
+              value={personal.website}
+              onChange={(e) => updatePersonal({ website: e.target.value })}
+              placeholder="https://ming.dev"
+              sx={{ flex: 1 }}
+            />
+            {toggleIcon('website')}
+          </Box>
+
+          {/* GitHub */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  GitHub
+                  <FieldTip tip="计算机岗强烈建议填写" />
+                </Box>
+              }
+              value={personal.github}
+              onChange={(e) => updatePersonal({ github: e.target.value })}
+              placeholder="https://github.com/mingdev"
+              sx={{ flex: 1 }}
+            />
+            {toggleIcon('github')}
+          </Box>
         </CardContent>
       </Card>
     </Box>

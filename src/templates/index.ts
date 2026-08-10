@@ -7,9 +7,6 @@ export { type StoredTemplate, defaultTemplateHTML, defaultTemplateMeta, defaultT
 // Re-export M3 template
 export { m3TemplateHTML, m3TemplateMeta, m3Template } from './m3'
 
-// Re-export VS Code template
-export { vscodeTemplateHTML, vscodeTemplateMeta, vscodeTemplate } from './vscode'
-
 // Re-export GitHub template
 export { githubTemplateHTML, githubTemplateMeta, githubTemplate } from './github'
 
@@ -34,7 +31,6 @@ export { fdeTemplateHTML, fdeTemplateMeta, fdeTemplate } from './fde'
 // Built-in templates list
 import { defaultTemplate } from './classic'
 import { m3Template } from './m3'
-import { vscodeTemplate } from './vscode'
 import { githubTemplate } from './github'
 import { minimalTemplate } from './minimal'
 import { academicTemplate } from './academic'
@@ -47,7 +43,6 @@ import type { StoredTemplate } from './classic'
 export const builtInTemplates: StoredTemplate[] = [
   defaultTemplate,
   m3Template,
-  vscodeTemplate,
   githubTemplate,
   minimalTemplate,
   academicTemplate,
